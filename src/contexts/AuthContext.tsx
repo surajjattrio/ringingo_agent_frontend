@@ -104,7 +104,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     tenant_domain: string,
     browserToken: string,
     remember_me: false,
-    campaign_uuid: string
+    campaign_uuid: string,
+    company_code: string
   ) => {
     console.log("newwcaam", campaign_uuid);
     // RemoveCookiesData();
@@ -116,6 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         tenant_domain,
         browserToken,
         campaign_uuid,
+        company_code
       });
       console.log("Payload being sent to login:", {
         username,
@@ -123,6 +125,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         tenant_domain,
         browserToken,
         campaign_uuid,
+        company_code
       });
 
       if (user?.data?.access_token) {

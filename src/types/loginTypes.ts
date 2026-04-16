@@ -5,5 +5,5 @@ export interface LoginFormValues {
   browserToken: string;
   rememberMe: boolean;
   campaign_uuid: string; // ← ✅ Add this line
-
+  company_code: string;
 }

@@ -7,8 +7,8 @@ export type AuthContextType = {
         tenant_domain: string,
         browserToken: string,
         rememberMe: boolean,
-        campaign_uuid: string
-
+        campaign_uuid: string,
+        company_code: string
     ) => Promise<void>;
     logout: (userId: string, autologout?: string) => Promise<void>;
     forgotPassword: (

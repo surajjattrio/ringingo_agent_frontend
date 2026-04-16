@@ -67,9 +67,11 @@ const LoginForm = () => {
   const logout = async () => {
     setIsLoading(true)
     try {
+      const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase() : domain;
+
       const res: any = await apiInstance.post(
         LOGIN_PAGE_LOGOUT,
-        { username: values?.username, domain: domain}
+        { username: values?.username, domain: currentDomain}
       );
       if (res && res?.statusCode === 200) {
         dispatch({
@@ -90,10 +92,12 @@ const LoginForm = () => {
   };
   const forceLogin = async (data:any) => {
     setIsLoading(true)
+          const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase()  : domain;
+
     try {
       const res: any = await apiInstance.post(
         FORCE_LOGIN,
-        { username: values?.username, domain: domain}
+        { username: values?.username, domain: currentDomain}
       );
       if (res && res?.statusCode === 200) {
       if(res?.message?.force_login==="0"){
@@ -182,6 +186,7 @@ const LoginForm = () => {
     username: "",
     password: "",
     tenant_domain: tenantPortal, // ::yaksh::
+company_code: "",
     browserToken: "",
     campaign_uuid: "", // <- new
     rememberMe: false,
@@ -191,6 +196,7 @@ const LoginForm = () => {
     username: Yup.string().required("Please enter your username"),
     password: Yup.string().required("Please enter your password"),
     campaign_uuid: Yup.string().required("Please select a campaign"),
+company_code: Yup.string().optional(),
   });
 
   // CALL REGISTRATION
@@ -282,10 +288,14 @@ const LoginForm = () => {
   // console.log("campaignOptions", campaignOptions);
 
 
-  const fetchAllowedCampaigns = async (username: string, domain: any) => {
+  const fetchAllowedCampaigns = async (username: string, domain: string, company_code?: string) => {
     if (!username) return;
     try {
-      let payload = { username, domain };
+      const currentDomain = company_code ? `${company_code}.ringingo.com`.toLowerCase() : domain;
+      let payload:any = { username, domain:currentDomain };
+      if (company_code) {
+        payload.company_code = company_code.toLowerCase();
+      }
       // const res = await axios.get(`https://ringingo.cc.local:5000/user/allowed_campaigns?username=${encodeURIComponent(username)}`);
       const res: any = await dispatch(userAllowedCampaign({ params: payload })).unwrap();
       console.log("resresresres", res)
@@ -371,12 +381,13 @@ const LoginForm = () => {
       const res: any = await login(
         values.username,
         values.password,
-        values.tenant_domain,
+        values.company_code ? `${values.company_code}.ringingo.com`.toLowerCase() : values.tenant_domain,
 
         //Socket browserToken
         browserToken,
         values.rememberMe,
-        campaignUUID
+        campaignUUID,
+values.company_code?.toLowerCase()
       );
 
       console.log(res);
@@ -509,6 +520,23 @@ const LoginForm = () => {
               noSpace
               />
             */}
+ <Input
+              isLogin={true}
+              icon="leadGroup"
+              className="w-full"
+              name="company_code"
+              label="Company Code"
+              value={values.company_code}
+              touched={touched}
+              errors={errors}
+              onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur(e);
+                fetchAllowedCampaigns(values.username, domain, e.target.value);
+              }}
+              isInfo={false}
+              noSpace
+            />
               < Input
                 isLogin={true}
                 icon="userLogin"
@@ -524,9 +552,9 @@ const LoginForm = () => {
                 errors={errors}
                 onChange={handleChange}
                 onBlur={(e) => {
-                  handleBlur(e); // preserve Formik's behavior
-                  fetchAllowedCampaigns(e.target.value, domain); // fetch after blur
-                }}
+                handleBlur(e);
+                fetchAllowedCampaigns(e.target.value, domain, values.company_code);
+              }}
                 isInfo={false}
                 noSpace
 
