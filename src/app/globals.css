@@ -1,0 +1,265 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Third-party Css*/
+@import "react-toastify/dist/ReactToastify.css";
+@import "react-responsive-carousel/lib/styles/carousel.min.css";
+@import "react-h5-audio-player/lib/styles.css";
+@import "react-datepicker/dist/react-datepicker.css";
+
+/* WhatsApp Popup Animations */
+@keyframes pulse-once {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-once {
+  animation: pulse-once 0.4s ease-out;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --toastify-font-family: var(--font-noto);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+/* autofill background color remove */
+input:-webkit-autofill {
+  transition: background-color 9999s ease-in-out 0s;
+  -webkit-text-fill-color: #000 !important;
+  caret-color: #000 !important;
+}
+
+.toaster-success {
+  background-color: #e6fff4 !important;
+}
+
+.toaster-error {
+  background-color: #ef9fa4 !important;
+}
+
+body {
+  background: white;
+  height: 100vh;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* .Toastify__progress-bar {
+  top: 0 !important;
+} */
+
+/* CUSTOM CSS FOR AUDIO PLAYER */
+
+.rhap_play-pause-button {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.rhap_main-controls-button {
+  margin: 0;
+  width: unset;
+  height: unset;
+}
+
+.rhap_container {
+  background: #f9f9f9;
+  box-shadow: none;
+  width: 70%;
+  border-radius: 1000px;
+  padding: 7px 15px;
+}
+
+.rhap_controls-section {
+  flex: unset;
+}
+
+.rhap_progress-indicator {
+  display: none;
+}
+
+.rhap_progress-filled {
+  background-color: #db6443;
+}
+.rhap_progress-bar {
+  background-color: #fedbd1;
+  height: 4px;
+}
+
+.rhap_time {
+  font-size: 12px;
+}
+
+/* HIDE SCROLL BAR */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* DATE PICKER */
+.react-datepicker {
+  display: flex !important;
+}
+
+.react-datepicker__header--time {
+  padding-top: 20px !important;
+  padding-bottom: 20px !important;
+}
+
+.react-datepicker__time-list {
+  height: 175px !important;
+}
+
+/* SCROLL BAR UI */
+
+/* width */
+.scrollbar-change::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track */
+.scrollbar-change::-webkit-scrollbar-track {
+  background: #f2f2f2;
+}
+
+/* Handle */
+.scrollbar-change::-webkit-scrollbar-thumb {
+  background: #b8b8b8;
+  border-radius: 5px;
+}
+
+#messageBody .carousel .thumb {
+  width: 60px;
+  height: 60px;
+}
+
+#messageBody .carousel .slide .pdf-slider img {
+  height: 50px;
+  width: 50px;
+  object-fit: cover;
+}
+
+#messageBody .carousel .slide .image-slider img {
+  height: 200px;
+  width: 200px;
+  object-fit: cover;
+}
+
+#messageBody .carousel.carousel-slider .control-arrow:hover {
+  background: none;
+}
+
+#messageBody .carousel .control-next.control-arrow:before {
+  background-image: url("../../public/assets/icons/white/arrow_circle_right.svg");
+  border: none;
+  width: 30px;
+  height: 30px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  background-size: 20px 20px;
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+}
+
+#messageBody .carousel .control-prev.control-arrow:before {
+  background-image: url("../../public/assets/icons/white/arrow_circle_right.svg");
+  border: none;
+  width: 30px;
+  height: 30px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  background-size: 20px 20px;
+}
+
+.message-footer .EmojiPickerReact {
+  position: absolute !important;
+  bottom: 20vh !important;
+  width: calc(100% - 15px) !important;
+  height: 140px !important;
+}
+
+/* HIDE SCROLL BAR */
+.message-footer .EmojiPickerReact .epr-body::-webkit-scrollbar {
+  display: none;
+}
+
+.message-footer .EmojiPickerReact .epr-body {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.message-footer.message-emoji-collapse .EmojiPickerReact {
+  height: 40px !important;
+}
+
+.message-footer.message-emoji-collapse .EmojiPickerReact .epr-header {
+  display: none;
+}
+
+.message-footer.message-emoji-collapse .message-expand-icon {
+  transform: rotate(180deg);
+}
+
+.message-footer .EmojiPickerReact input {
+  height: 30px;
+}
+
+.message-footer .EmojiPickerReact h2,
+.message-footer .EmojiPickerReact .epr-category-nav,
+.message-footer .EmojiPickerReact .epr-hidden-on-search,
+.message-footer .EmojiPickerReact .epr-skin-tones {
+  display: none;
+  height: 0px;
+  width: 0px;
+}
+
+.message-footer .EmojiPickerReact .epr-header,
+.message-footer .EmojiPickerReact .epr-body {
+  width: calc(100% - 30px);
+}
+
+#messageBody .conversation-msg .conversation-msg-buttons {
+  width: 0px;
+}
+
+#messageBody .conversation-msg:hover .conversation-msg-buttons,
+#messageBody
+  .conversation-msg.conversation-edit-message
+  .conversation-msg-buttons {
+  width: 70px;
+}
+
+.css-mias9i-placeholder {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
