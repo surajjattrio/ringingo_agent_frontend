@@ -5860,7 +5860,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
             xl:max-w-[289px] 
             2xl:max-w-[289px]
             h-[480px] 
-            bg-white 
+            bg-white
             border border-blue-700 
             rounded-3xl 
             drop-shadow-lg
@@ -5942,7 +5942,12 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
               )}
 
             {/* Screen Content */}
-            <div className="px-4 mt-4">{renderScreen()}</div>
+            <div
+             className={`${callScreen === "LIVE"? "mt-0"
+                  : "mt-4"
+                }`}
+            //  className="px-4 mt-4 "
+             >{renderScreen()}</div>
 
             {/* Close Button Area (if needed in future) */}
             <div
