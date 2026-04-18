@@ -442,12 +442,12 @@ const CallingPage = (props: CallingPageProps) => {
 
   return (
     <>
-      <div className="3xl:px-8 px-6 flex flex-col justify-between select-none 3xl:h-[40%] h-[40%] 3xl:pb-6 pb-4 ">
-        <div className="3xl:py-6 py-3">
+      <div className="flex flex-col justify-between select-none h-full">
+        <div className="py-3">
           <div className="flex items-center">
-            <div className="flex items-center w-full">
-
-              <div className="3xl:h-14 3xl:w-14 h-12 w-12 bg-blue rounded-full flex items-center justify-center">
+            <div className="flex items-center w-full justify-between px-4">
+              <div className="flex justify-between">
+              <div className="3xl:h-14 3xl:w-14 h-12 w-12 rounded-full flex items-center justify-center">
                 <span className="3xl:text-base text-sm text-heading font-bold">
                   {callerName
                     ? callerName.slice(0, 1).toUpperCase()
@@ -466,13 +466,12 @@ const CallingPage = (props: CallingPageProps) => {
                   </span>
                 ) : null}
                 <span
-                  className={`text-heading ${
+                  className={`text-heading flex ${
                     callerName
                       ? "3xl:text-xs text-[11px] font-medium"
                       : "3xl:text-sm text-xs font-bold"
                   }`}
                 >
-                  {callerNumber}
  {callerNumber && (
                     <Icon
                       name="Copy"
@@ -484,9 +483,14 @@ const CallingPage = (props: CallingPageProps) => {
                         Success("Copied to clipboard");
                       }}
                     />
+
                   )}
+                  {callerNumber}
+
                 </span>
               </div>
+              </div>
+
 
 
                <div className="flex flex-col items-center">
@@ -501,7 +505,7 @@ const CallingPage = (props: CallingPageProps) => {
                   </span>
                 </>
               )}
-            </div>
+              </div>
             </div>
           
           </div>
