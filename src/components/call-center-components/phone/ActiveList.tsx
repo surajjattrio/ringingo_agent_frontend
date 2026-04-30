@@ -4,7 +4,8 @@ import Legacy from "next/legacy/image";
 
 // PROJECT IMPORTS
 import { useAppDispatch } from "@/redux/hooks";
-import { Success } from "@/redux/services/toasterService";
+import { Success, Danger } from "@/redux/services/toasterService";
+import { getWabaSsoTokenPost } from "@/redux/services/chatService";
 import {
   clearLeadDetails,
   clearLeadUuid,
@@ -607,10 +608,22 @@ const ActiveList = ({
                         </span>
                       </div>
                       <div className="col-span-1 flex gap-2 justify-end">
-                        <a
-                          target="_blank"
+                        <div
                           className="cursor-pointer"
-                          href={`https://wa.me/${val?.phone_number}`}
+                          onClick={async () => {
+                            try {
+                              const res: any = await getWabaSsoTokenPost();
+                              debugger
+                              const redirectUrl = res?.data?.redirect_url;
+                              if (redirectUrl) {
+                                window.open(redirectUrl, "_blank");
+                              } else {
+                                Danger("SSO redirect URL not available");
+                              }
+                            } catch (err) {
+                              Danger("Failed to generate SSO token");
+                            }
+                          }}
                         >
                           <div className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[16px] h-[16px]">
                             <Legacy
@@ -619,7 +632,7 @@ const ActiveList = ({
                               layout="fill"
                             />
                           </div>
-                        </a>
+                          </div>
                         {isCallHangUp && (
                           <div
                             className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[18px] h-[18px] cursor-pointer"
@@ -719,10 +732,21 @@ const ActiveList = ({
                         ) : null}
                       </div>
                       <div className="col-span-1 flex gap-2 justify-end">
-                        <a
-                          target="_blank"
+                        <div
                           className="cursor-pointer"
-                          href={`https://wa.me/${val?.phone_number}`}
+                          onClick={async () => {
+                            try {
+                              const res: any = await getWabaSsoTokenPost();
+                              const redirectUrl = res?.data?.redirect_url;
+                              if (redirectUrl) {
+                                window.open(redirectUrl, "_blank");
+                              } else {
+                                Danger("SSO redirect URL not available");
+                              }
+                            } catch (err) {
+                              Danger("Failed to generate SSO token");
+                            }
+                          }}
                         >
                           <div className="relative 5xl:w-[24px] 5xl:h-[24px] 4xl:w-[20px] 4xl:-h-[20px] w-[16px] h-[16px]">
                             <Legacy
@@ -731,7 +755,7 @@ const ActiveList = ({
                               layout="fill"
                             />
                           </div>
-                        </a>
+                        </div>
                         <div
                           className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[18px] h-[18px] cursor-pointer"
                           onClick={() => {
