@@ -205,15 +205,25 @@ useEffect(() => {
   //   };
   // }, [selectedCampaign, campaignMode, campaignType, user]);
 
-  const onStartBreak = (breakOption: any) => {
+  const onStartBreak = (breakOption: any, customEndDate?: Date) => {
     if (breakOption.duration) {
-      const endDate = new Date();
-      // const hoursMinutes: any[] = "00:01".split(":");
-      const hoursMinutes = breakOption.duration.split(":");
-      hoursMinutes[0] = parseInt(hoursMinutes[0]);
-      hoursMinutes[1] = parseInt(hoursMinutes[1]);
-      const calculatedMinutes = hoursMinutes[0] * 60 + hoursMinutes[1];
-      endDate.setTime(endDate.getTime() + calculatedMinutes * 60 * 1000);
+      let endDate: Date;
+      if (customEndDate) {
+        endDate = customEndDate;
+      } else {
+        endDate = new Date();
+        // const hoursMinutes: any[] = "00:01".split(":");
+        const hoursMinutes = breakOption.duration.split(":");
+        hoursMinutes[0] = parseInt(hoursMinutes[0]);
+        hoursMinutes[1] = parseInt(hoursMinutes[1]);
+        const calculatedMinutes = hoursMinutes[0] * 60 + hoursMinutes[1];
+        endDate.setTime(endDate.getTime() + calculatedMinutes * 60 * 1000);
+
+        Cookies.set("break_data", JSON.stringify({
+          option: breakOption,
+          endDate: endDate.getTime()
+        }));
+      }
       clearInterval(breakInterval);
       breakInterval = setInterval(() => {
         const now = new Date();
@@ -243,6 +253,7 @@ useEffect(() => {
     setBreakTiming("");
     setBreakValue(undefined);
     setIsOpenConfirmBreak(false);
+    Cookies.remove("break_data");
 
     // Register
 
@@ -365,6 +376,30 @@ useEffect(() => {
     //   goInBreak({ breakcode_uuid: e.value, login_status: "1" })
     // ).unwrap();
   };
+
+  useEffect(() => {
+    const savedBreak = Cookies.get("break_data");
+    if (savedBreak && user) {
+      try {
+        const breakData = JSON.parse(savedBreak);
+        const endDate = new Date(breakData.endDate);
+        const now = new Date();
+
+        if (endDate > now) {
+          userAgentUnRegistration();
+          setBreakValue(breakData.option);
+          onStartBreak(breakData.option, endDate);
+          dispatch(onStatusChange("1"));
+          !user?.isPbx && onUpdateLiveAgentEntry("3");
+          dispatch(onSetUserEntry("busy-entry"));
+        } else {
+          Cookies.remove("break_data");
+        }
+      } catch (e) {
+        console.error("Error restoring break:", e);
+      }
+    }
+  }, [user]);
 
   // useEffect(() => {
   //   const handleBeforeUnload = (event: any) => {
