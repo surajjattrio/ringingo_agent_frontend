@@ -43,7 +43,7 @@ const CallSummaryCards = () => {
                 <span className="3xl:text-base text-xs text-heading font-bold flex items-center uppercase tracking-wider">
                     Today's Overview
                 </span>
-                <button
+                {/* <button
                     onClick={fetchData}
                     className="p-1 hover:bg-white/20 rounded-full transition-colors group"
                     title="Refresh Stats"
@@ -54,7 +54,7 @@ const CallSummaryCards = () => {
                         height={16}
                         className="text-heading group-active:rotate-180 transition-transform duration-300"
                     />
-                </button>
+                </button> */}
             </div>
             <div className="flex flex-row gap-3 w-full pt-3">
                 {/* Total Call */}

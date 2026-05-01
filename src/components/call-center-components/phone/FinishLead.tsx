@@ -50,6 +50,7 @@ import { useAuth } from "@/contexts/hooks/useAuth";
 import {
   endChat,
   getActiveUnreadChat,
+  getAgentTodayStats,
   useActiveConversation,
   useChatMode,
   useIsActiveChat,
@@ -344,6 +345,10 @@ console.log("customCallId", customCallId)
       }
       await dispatch(endChat(data)).unwrap();
       dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+      dispatch(getAgentTodayStats({
+        uuid: user?.agent_detail?.uuid,
+        timezone: user?.timezone || "Asia/Kolkata"
+      }));
       setIsLoading(false);
       setIsHangUp(false);
       resetForm();
@@ -438,6 +443,10 @@ console.log("customCallId", customCallId)
           dispatch(onSetDialType("leadDial"));
           dispatch(onShowCallModal("true"));
           dispatch(clearCustomCallId());
+          dispatch(getAgentTodayStats({
+            uuid: user?.agent_detail?.uuid,
+            timezone: user?.timezone || "Asia/Kolkata"
+          }));
         }
       } else {
         console.log("OUTGOING CALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
@@ -489,7 +498,7 @@ console.log("customCallId", customCallId)
           // Success(!!addLeadNoteId ? response?.data : res.data);
           dispatch(onSetDialType("manualDial"));
           setIsLoading(false);
-          (campaignMode === "0" || campaignMode === "2") && onGetLeadInfo();
+          // (campaignMode === "0" || campaignMode === "2") && onGetLeadInfo();
           (campaignMode === "1" ||
             campaignMode === "3" ||
             campaignMode === "0") &&
@@ -525,6 +534,14 @@ console.log("customCallId", customCallId)
           dispatch(onAddLeadNoteId(null));
           setIsHangUp(false)
           dispatch(clearCustomCallId());
+          dispatch(getAgentTodayStats({
+            uuid: user?.agent_detail?.uuid,
+            timezone: user?.timezone || "Asia/Kolkata"
+          }));
+          if (campaignMode === "2") {
+            await onGetLeadInfo();
+            dispatch(onShowLeadInfo(true));
+          }
         }
       }
     } catch (error) {

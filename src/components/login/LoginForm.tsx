@@ -440,6 +440,22 @@ const LoginForm = () => {
     validationSchema,
     onSubmit,
   });
+  
+  useEffect(() => {
+    // Clear localStorage if it has data
+    if (localStorage.length > 0) {
+      localStorage.clear();
+    }
+ 
+    // Clear all cookies if any exist
+    const allCookies = Cookies.get();
+    if (Object.keys(allCookies).length > 0) {
+      Object.keys(allCookies).forEach((cookieName) => {
+        Cookies.remove(cookieName);
+      });
+    }
+  }, []);
+  
   useEffect(() => {
     const savedUsername = Cookies.get("username") || "";
     const rememberMe = Cookies.get("rememberMe") === "true";
