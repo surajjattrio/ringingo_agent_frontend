@@ -64,13 +64,6 @@ const IdleWarningModal = ({
 
             {/* Body */}
             <div className="px-6 py-5">
-              <p className="text-sm text-[#374151] mb-3">
-                You have been idle for approximately{" "}
-                <span className="font-semibold text-[#111827]">
-                  {idleMinutes} minute{idleMinutes !== 1 ? "s" : ""}
-                </span>
-                .
-              </p>
               <p className="text-sm text-[#374151] mb-4">
                 You will be{" "}
                 <span className="font-semibold text-red-600">
