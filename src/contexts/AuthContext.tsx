@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, createContext, useReducer } from "react";
+import { useEffect, useRef, useState, createContext, useReducer,useCallback } from "react";
 
 // PROJECT IMPORTS
 import { LOGIN, LOGOUT, PROCESS } from "./actions";
@@ -9,11 +9,16 @@ import {
   onSelectCampaign,
   onSelectCampaignDetails,
   onStatusChange,
+  selectStatus,
+  selectCallScreen,
+  selectIsShowCallDuration,
+  selectIsCallHangUp,
 } from "@/redux/slice/commonSlice";
-import { useAppDispatch } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 //import { baseUrl } from "@/API/baseURL";
 import { Danger, Success } from "@/redux/services/toasterService";
 import { Loader } from "@/components/ui-components";
+import IdleWarningModal from "@/components/modals/IdleWarningModal";
 import { updateLiveAgentEntry } from "@/redux/slice/campaignSlice";
 
 import {
@@ -50,6 +55,9 @@ interface InitialStateProps {
   isLoggedIn: boolean;
 }
 
+// Warning will show this many seconds before the actual logout
+const IDLE_WARNING_LEAD_SECONDS = 30;
+
 const initialState: InitialStateProps = {
   user: {},
   isLoggedIn: false,
@@ -61,6 +69,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const reduxDispatch = useAppDispatch();
+  const currentStatus = useAppSelector(selectStatus);
+  const callScreen = useAppSelector(selectCallScreen);
+  const isShowCallDuration = useAppSelector(selectIsShowCallDuration);
+  const isCallHangUp = useAppSelector(selectIsCallHangUp);
   const prepareData = (isPbx: boolean, permission: any) => {
     const sideBarData = isPbx ? PbxMenuList : CallCenterMenuList;
     return sideBarData
@@ -71,6 +83,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       )
       ?.map((val: any) => val?.url);
   };
+  const idleTimeoutRef = useRef<number | null>(null);
+  const warningTimeoutRef = useRef<number | null>(null);
+  const warningCountdownRef = useRef<number | null>(null);
+  const idleStartRef = useRef<number>(Date.now());
+  const warningVisibleRef = useRef(false);
+  const [showIdleWarning, setShowIdleWarning] = useState(false);
+  const [idleWarningSecondsLeft, setIdleWarningSecondsLeft] = useState(IDLE_WARNING_LEAD_SECONDS);
+  const [idleMinutesSinceActive, setIdleMinutesSinceActive] = useState(0);
   useEffect(() => {
     const init = async () => {
       try {
@@ -240,7 +260,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // LOGOUT USER
-  const logout = async (userId: string, autologout?: string) => {
+  const logout = useCallback(async (userId: string, autologout?: string) => {
     try {
       const res: any = await apiInstance.patch(
         AGENT_ADMIN_LOGOUT + `/${userId}`,
@@ -269,13 +289,153 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         reduxDispatch(onSelectCampaign(""));
         reduxDispatch(onSelectCampaignDetails(undefined));
         RemoveCookiesData();
+        localStorage.clear();
         clearAllData(reduxDispatch);
         disconnectSocket()
       }
     } catch (error: any) {
       Danger(error?.response?.data?.message);
     }
-  };
+  }, [dispatch, reduxDispatch]);  
+  // Dismiss warning and reset idle timer (called ONLY when agent clicks "Stay Logged In")
+  const dismissIdleWarning = useCallback(() => {
+    setShowIdleWarning(false);
+    warningVisibleRef.current = false;
+    if (warningCountdownRef.current) {
+      window.clearInterval(warningCountdownRef.current);
+      warningCountdownRef.current = null;
+    }
+    // Reset the idle start timestamp
+    idleStartRef.current = Date.now();
+  }, []);
+
+  useEffect(() => {
+    // Check if automatic logout is disabled (1 = disabled, 0 = enabled)
+    const autoLogoutEnabled = state?.user?.permission?.auto_logout !== "1";
+    
+    // Default to 30 minutes, or use configured time
+    const configuredTimeout = state?.user?.permission?.idle_timeout 
+      ? parseInt(state.user.permission.idle_timeout, 10) * 60 * 1000 
+      : 30 * 60 * 1000;
+
+    // Time before auto-logout when the warning should appear (in ms)
+    const warningLeadMs = IDLE_WARNING_LEAD_SECONDS * 1000;
+    // Time after which the warning popup should show
+    const warningDelay = Math.max(configuredTimeout - warningLeadMs, 0);
+      
+    const clearAllTimers = () => {
+      if (idleTimeoutRef.current) {
+        window.clearTimeout(idleTimeoutRef.current);
+        idleTimeoutRef.current = null;
+      }
+      if (warningTimeoutRef.current) {
+        window.clearTimeout(warningTimeoutRef.current);
+        warningTimeoutRef.current = null;
+      }
+      if (warningCountdownRef.current) {
+        window.clearInterval(warningCountdownRef.current);
+        warningCountdownRef.current = null;
+      }
+      setShowIdleWarning(false);
+      warningVisibleRef.current = false;
+    };
+
+    const startIdleTimer = () => {
+      console.log("[AuthContext] startIdleTimer called. Setting timeout for", configuredTimeout, "ms (warning at", warningDelay, "ms)");
+      clearAllTimers();
+      // Reset idle start time
+      idleStartRef.current = Date.now();
+
+      // 1) Set up warning popup timer
+      warningTimeoutRef.current = window.setTimeout(() => {
+        console.log("[AuthContext] WARNING TIMEOUT FIRED! Showing idle warning popup...");
+        // Calculate how many minutes agent has been idle
+        const elapsedMs = Date.now() - idleStartRef.current;
+        setIdleMinutesSinceActive(Math.floor(elapsedMs / 60000));
+        setIdleWarningSecondsLeft(IDLE_WARNING_LEAD_SECONDS);
+        setShowIdleWarning(true);
+        warningVisibleRef.current = true;
+
+        // Start a 1-second countdown interval
+        let remaining = IDLE_WARNING_LEAD_SECONDS;
+        warningCountdownRef.current = window.setInterval(() => {
+          remaining -= 1;
+          setIdleWarningSecondsLeft(remaining);
+          if (remaining <= 0) {
+            if (warningCountdownRef.current) {
+              window.clearInterval(warningCountdownRef.current);
+              warningCountdownRef.current = null;
+            }
+          }
+        }, 1000);
+      }, warningDelay);
+
+      // 2) Set up actual auto-logout timer (same as before)
+      idleTimeoutRef.current = window.setTimeout(() => {
+        console.log("[AuthContext] IDLE TIMEOUT FIRED! Logging out agent...");
+        setShowIdleWarning(false);
+        warningVisibleRef.current = false;
+        if (state?.user?.agent_detail?.uuid) {
+          Danger("You have been logged out due to inactivity.");
+          logout(state.user.agent_detail.uuid, "autologout");
+        }
+      }, configuredTimeout);
+    };
+
+    const activityEvents = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "click",
+    ];
+
+    let throttleTimer: number | null = null;
+    const resetIdleTimer = () => {
+      // If the warning popup is visible, do NOT reset — only "Stay Logged In" button should dismiss it
+      if (warningVisibleRef.current) return;
+      if (!throttleTimer) {
+        console.log("[AuthContext] Activity detected, resetting idle timer...");
+        startIdleTimer();
+        throttleTimer = window.setTimeout(() => {
+          throttleTimer = null;
+        }, 10000); // Only reset the timer at most once every 10 seconds
+      }
+    };
+
+    // Check if agent is in active state (not idle)
+    const isAgentActive =
+      currentStatus === "1" || // Break
+      currentStatus === "3" || // Break (from realtime report)
+      callScreen === "INCOMING" ||
+      callScreen === "LIVE" ||
+      isShowCallDuration ||
+      isCallHangUp; // ACW (After Call Work)
+
+    // Only apply event listeners and timer if auto_logout is enabled
+    console.log(`[AuthContext] useEffect run. autoLogoutEnabled=${autoLogoutEnabled}, isLoggedIn=${state.isLoggedIn}, isAgentActive=${isAgentActive}, currentStatus=${currentStatus}`);
+    if (autoLogoutEnabled && state.isLoggedIn && !isAgentActive) {
+      console.log("[AuthContext] Agent is idle. Starting event listeners and timer.");
+      activityEvents.forEach((event) =>
+        window.addEventListener(event, resetIdleTimer)
+      );
+      startIdleTimer();
+    } else {
+      console.log("[AuthContext] Agent is active (or disabled). Clearing timer.");
+      clearAllTimers();
+    }
+
+    return () => {
+      activityEvents.forEach((event) =>
+        window.removeEventListener(event, resetIdleTimer)
+      );
+      if (throttleTimer) {
+        window.clearTimeout(throttleTimer);
+      }
+      clearAllTimers();
+    };
+  }, [state.isLoggedIn, state.user, currentStatus, callScreen, isShowCallDuration, isCallHangUp, logout]);
 
   // FORGOT PASSWORD
   const forgotPassword = async (
@@ -358,6 +518,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       {children}
+      <IdleWarningModal
+        visible={showIdleWarning}
+        secondsLeft={idleWarningSecondsLeft}
+        idleMinutes={idleMinutesSinceActive}
+        onStayLoggedIn={dismissIdleWarning}
+      />
     </AuthContext.Provider>
   );
 };
