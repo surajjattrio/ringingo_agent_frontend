@@ -1,9 +1,34 @@
-import { useCampaignType } from "@/redux/slice/commonSlice";
+import { useCampaignMode, useCampaignType } from "@/redux/slice/commonSlice";
 import { getLoginAgentCampaign } from "@/utils/Storage";
+
+// Map campaign mode value to human-readable label
+const getCampaignModeLabel = (mode: string): string => {
+    switch (mode) {
+        case "0": return "Manual";
+        case "1": return "Auto";
+        case "2": return "Preview";
+        case "3": return "Predictive";
+        default: return "Incoming";
+    }
+};
+
+// Map campaign mode value to text color classes
+const getCampaignModeColor = (mode: string): string => {
+    switch (mode) {
+        case "0": return "text-gray-600";       // Manual
+        case "1": return "text-green-700";      // Auto
+        case "2": return "text-purple-700";     // Preview
+        case "3": return "text-orange-700";     // Predictive
+        default: return "text-gray-600";
+    }
+};
 
 const CampaignStatus = () => {
     const LoginAgentCampaignName = getLoginAgentCampaign();
     const campaignType = useCampaignType();
+    const campaignMode = useCampaignMode();
+
+    const modeLabel = getCampaignModeLabel(campaignMode);
 
     // ✅ keep behavior: if no campaign, show nothing
     if (!LoginAgentCampaignName) return null;
@@ -29,6 +54,16 @@ const CampaignStatus = () => {
                 >
                     {LoginAgentCampaignName}
                 </span>
+                {modeLabel && (
+                    <>
+                        <div className="w-[1px] h-3 bg-gray-300" />
+                        <span
+                            className={`text-[10px] font-bold uppercase ${getCampaignModeColor(campaignMode)}`}
+                        >
+                            {modeLabel}
+                        </span>
+                    </>
+                )}
             </div>
         </>
     );
