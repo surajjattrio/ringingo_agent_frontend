@@ -482,35 +482,35 @@ values.company_code?.toLowerCase()
     //     backgroundImage: 'url("/assets/images/Loginbg.png")', // Replace with the actual path of your image
     //   }}
     >
-      <div className="flex items-center" >
+      <div className="flex items-stretch shadow-2xl rounded-[30px] overflow-hidden" >
         {/* Left Section (Image) */}
-        < div className="flex-1 flex items-center justify-center shadow-lg rounded-tl-lg rounded-bl-lg" >
+        <div className="w-[380px] min-h-[520px] flex items-center justify-center rounded-l-[30px] overflow-hidden" >
           <Icon
             name="LoginLogo"
             alt="Login"
-            width={400}
-            height={400}
-          // className="object-contain"
+            width={380}
+            height={520}
+            className="object-cover w-full h-full block"
           />
         </div>
 
         {/* Right Section (Login Form) */}
-        <div className="w-[400px] h-[500px] p-5 border-2 rounded-tr-[40px] rounded-br-[40px] shadow-md bg-white" >
+        <div className="w-[380px] min-h-[520px] flex flex-col p-7 bg-white space-y-3" >
           {/* Logo */}
-          < div className=" flex justify-center" >
+          < div className=" flex justify-center mb-1" >
             <Icon
               name="MenuLogoExpandedImage"
-              height={50}
-              width={220}
+              height={40}
+              width={180}
               alt="Logo"
             />
           </div>
 
-          < h2 className="text-[24px] font-medium mb-6 text-center text-[#322996]" >
+          < h2 className="text-[20px] font-medium mb-4 text-center text-[#322996]" >
             Welcome Back
           </h2>
 
-          < form onSubmit={handleSubmit} className="space-y-5" >
+          < form onSubmit={handleSubmit} className="space-y-3" >
             <div>
               {/* 
               <Input
@@ -551,6 +551,8 @@ values.company_code?.toLowerCase()
               isInfo={false}
               noSpace
             />
+            </div>
+            <div>
               < Input
                 isLogin={true}
                 icon="userLogin"
@@ -643,6 +645,7 @@ values.company_code?.toLowerCase()
               value={values.campaign_uuid}
               touched={touched}
               errors={errors}
+              isInfo={false}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 console.log("Selected campaign UUID:", e.target.value);
                 setFieldValue("campaign_uuid", e.target.value);
@@ -679,7 +682,7 @@ values.company_code?.toLowerCase()
             />
             {/* Terms & Condition */}
             <div className="text-center" >
-              <p className="text-[10px] text-gray-500  mt-4" >
+              <p className="text-[10px] text-gray-500  mt-2" >
                 By clicking to continue, you agree to our{" "}
                 <span className="font-bold text-gray-700" >
                   Terms & Condition
@@ -687,7 +690,7 @@ values.company_code?.toLowerCase()
               </p>
 
               {/* Powered by Bytebran */}
-              <p className="text-xs text-gray-600 text-center mt-4" >
+              <p className="text-xs text-gray-600 text-center mt-2" >
                 Powered by{" "}
                 <span className="text-[#322996] font-medium" > Ringingo </span>
               </p>
