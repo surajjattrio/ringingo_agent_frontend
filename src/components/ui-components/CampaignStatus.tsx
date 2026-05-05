@@ -34,35 +34,50 @@ const CampaignStatus = () => {
     if (!LoginAgentCampaignName) return null;
     return (
         <>
-            <div className="flex items-center gap-2">
-                <span
-                    className={`h-2 w-2 rounded-full ${campaignType === "inbound"
-                            ? "bg-emerald-500"
-                            : campaignType === "outbound"
-                                ? "bg-blue-500"
-                                : "bg-amber-500"
-                        }`}
-                />
-                <span className="text-xs text-[#6B7280] font-medium">Campaign:</span>
-                <span
-                    className={`text-[10px] font-bold uppercase ${campaignType === "inbound"
-                            ? "text-emerald-500"
-                            : campaignType === "outbound"
-                                ? "text-blue-500"
-                                : "text-amber-500"
-                        }`}
-                >
-                    {LoginAgentCampaignName}
-                </span>
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <span
+                        className={`h-2 w-2 rounded-full ${campaignType === "inbound"
+                                ? "bg-emerald-500"
+                                : campaignType === "outbound"
+                                    ? "bg-blue-500"
+                                    : "bg-amber-500"
+                            }`}
+                    />
+                    <span className="text-xs text-[#6B7280] font-medium">Campaign:</span>
+                    <span
+                        className={`text-[10px] font-bold uppercase ${campaignType === "inbound"
+                                ? "text-emerald-500"
+                                : campaignType === "outbound"
+                                    ? "text-blue-500"
+                                    : "text-amber-500"
+                            }`}
+                    >
+                        {LoginAgentCampaignName}
+                    </span>
+                </div>
+
                 {modeLabel && (
-                    <>
-                        <div className="w-[1px] h-3 bg-gray-300" />
+                    <div className="flex items-center gap-2">
+                        <span
+                            className={`h-2 w-2 rounded-full ${campaignMode === "0"
+                                    ? "bg-gray-500"
+                                    : campaignMode === "1"
+                                        ? "bg-green-700"
+                                        : campaignMode === "2"
+                                            ? "bg-purple-700"
+                                            : campaignMode === "3"
+                                                ? "bg-orange-700"
+                                                : "bg-emerald-500"
+                                }`}
+                        />
+                        <span className="text-xs text-[#6B7280] font-medium">Dial Method:</span>
                         <span
                             className={`text-[10px] font-bold uppercase ${getCampaignModeColor(campaignMode)}`}
                         >
                             {modeLabel}
                         </span>
-                    </>
+                    </div>
                 )}
             </div>
         </>
