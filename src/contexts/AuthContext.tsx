@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [showIdleWarning, setShowIdleWarning] = useState(false);
   const [idleWarningSecondsLeft, setIdleWarningSecondsLeft] = useState(IDLE_WARNING_LEAD_SECONDS);
   const [idleMinutesSinceActive, setIdleMinutesSinceActive] = useState(0);
+  const [idleResetCounter, setIdleResetCounter] = useState(0);
   useEffect(() => {
     const init = async () => {
       try {
@@ -307,6 +308,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     // Reset the idle start timestamp
     idleStartRef.current = Date.now();
+    // Trigger the useEffect to re-run and restart the full idle timer
+    setIdleResetCounter((c) => c + 1);
   }, []);
 
   useEffect(() => {
@@ -435,7 +438,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       clearAllTimers();
     };
-  }, [state.isLoggedIn, state.user, currentStatus, callScreen, isShowCallDuration, isCallHangUp, logout]);
+  }, [state.isLoggedIn, state.user, currentStatus, callScreen, isShowCallDuration, isCallHangUp, logout, idleResetCounter]);
 
   // FORGOT PASSWORD
   const forgotPassword = async (
