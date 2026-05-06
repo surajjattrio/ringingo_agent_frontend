@@ -114,3 +114,10 @@ export const getValidTime = (date: string) => {
   }
   return new Date();
 };
+
+export const truncateName = (name: string, limit: number = 12) => {
+  if (name && name.length > limit) {
+    return name.substring(0, limit) + "..";
+  }
+  return name || "";
+};
