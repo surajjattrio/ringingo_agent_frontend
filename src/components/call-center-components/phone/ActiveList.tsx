@@ -50,7 +50,7 @@ import {
   useIsActiveChat,
 } from "@/redux/slice/chatSlice";
 import { format } from "date-fns";
-import { getValidTime, isWhatsAppEnabled } from "@/components/helperFunctions";
+import { getValidTime, isWhatsAppEnabled, truncateName } from "@/components/helperFunctions";
 import { useAuth } from "@/contexts/hooks/useAuth";
 
 // ASSETS
@@ -598,10 +598,11 @@ const ActiveList = ({
                         </div>
                       </div>
                       <div className="col-span-4 flex flex-col">
-                        <span className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading">
-                          {(val?.first_name || "") +
-                            " " +
-                            (val?.last_name || "")}
+                        <span 
+                          className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading"
+                          title={(val?.first_name || "") + " " + (val?.last_name || "")}
+                        >
+                          {truncateName(val?.first_name || "") + " " + (val?.last_name || "")}
                         </span>
                         <span className="5xl:text-[13px] 4xl:text-[12px] text-[10px] text-txt-primary">
                           Outgoing call
@@ -707,10 +708,11 @@ const ActiveList = ({
                         //   </span>
                         // </div>
                         <div className="col-span-2 flex">
-                          <span className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading">
-                            {(val?.first_name || "") +
-                              " " +
-                              (val?.last_name || "")}
+                          <span 
+                            className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading"
+                            title={(val?.first_name || "") + " " + (val?.last_name || "")}
+                          >
+                            {truncateName(val?.first_name || "") + " " + (val?.last_name || "")}
                           </span>
                           <span className="5xl:text-[13px] 4xl:text-[12px] text-[10px] text-txt-primary ml-2">
                             Outgoing call

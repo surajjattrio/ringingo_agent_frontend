@@ -29,6 +29,7 @@ import {
   useIsActiveChat,
 } from "@/redux/slice/chatSlice";
 import Search from "@/components/pbx-components/phone/Search";
+import { truncateName } from "@/components/helperFunctions";
 
 // THIRD-PARTY IMPORT
 import Cookies from "js-cookie";
@@ -147,8 +148,11 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
               <div className="px-4">
                 {/* Name + Actions */}
                 <div className="py-1 flex justify-between items-center">
-                  <label className="3xl:text-sm text-xs font-bold text-heading">
-                    {(data?.first_name || "") + " " + (data?.last_name || "")}
+                  <label 
+                    className="3xl:text-sm text-xs font-bold text-heading"
+                    title={(data?.first_name || "") + " " + (data?.last_name || "")}
+                  >
+                    {truncateName(data?.first_name || "") + " " + (data?.last_name || "")}
                   </label>
                   {activeConversation?.user_uuid && isActiveChat ? (
                     <Button
