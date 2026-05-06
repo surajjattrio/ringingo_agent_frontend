@@ -113,9 +113,9 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
     }
   }, [currentLeadDetails, allLeadsDetails]);
 
-  useEffect(() => {
-    dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
-  }, [editLead]);
+  // useEffect(() => {
+  //   dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+  // }, [editLead]);
 
   const checkSelectedCampaign = () => {
     return chatModeType === "pbx" ? !!selectedCampaign : true;

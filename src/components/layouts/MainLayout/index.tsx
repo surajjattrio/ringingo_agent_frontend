@@ -173,9 +173,9 @@ useEffect(() => {
     console.log("Decline clicked")
   }
 
-  useEffect(() => {
-    dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
-  }, [onAccept, onDecline]);
+  // useEffect(() => {
+  //   dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+  // }, [onAccept, onDecline]);
 
   // useEffect(() => {
   //   let browserToken = user?.agent_detail?.browserToken;

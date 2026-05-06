@@ -346,11 +346,11 @@ export default function Phone() {
   //const { user } = useAuth();
 
   useEffect(() => {
-    if (selectedCampaign) {
-      dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
-    } else {
+    // if (selectedCampaign) {
+    //   dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+    // } else {
       dispatch(onUnSelectCampaign());
-    }
+    // }
   }, [selectedCampaign]);
 
   return (

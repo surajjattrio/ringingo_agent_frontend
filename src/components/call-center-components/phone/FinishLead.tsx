@@ -49,7 +49,7 @@ import {
 import { useAuth } from "@/contexts/hooks/useAuth";
 import {
   endChat,
-  getActiveUnreadChat,
+  // getActiveUnreadChat,
   getAgentTodayStats,
   useActiveConversation,
   useChatMode,
@@ -378,7 +378,7 @@ const FinishLead = (props: FinishLeadProps) => {
         data.disposition_uuid = values.lead_status;
       }
       await dispatch(endChat(data)).unwrap();
-      dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+      // dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
       dispatch(getAgentTodayStats({
         uuid: user?.agent_detail?.uuid,
         timezone: user?.timezone || "Asia/Kolkata"
