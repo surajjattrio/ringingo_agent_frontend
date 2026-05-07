@@ -824,7 +824,7 @@ const ActiveList = ({
                     </div>
                     <div className="col-span-4 flex flex-col">
                       <span className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading">
-                        {val.caller_id_name}
+                        {truncateName(val.caller_id_name, 12)}
                       </span>
                       <span className="5xl:text-[13px] 4xl:text-[12px] text-[10px] text-txt-primary">
                         Queue Call
