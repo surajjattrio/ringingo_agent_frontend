@@ -158,6 +158,14 @@ const FinishLead = (props: FinishLeadProps) => {
   console.log("customCallId", customCallId)
 
   const campaignMode = useCampaignMode();
+
+  // Capture IDs on mount to prevent race conditions with subsequent calls
+  const capturedIds = useRef({
+    addLeadNoteId,
+    addNoteId,
+    customCallId,
+    cookieCallId: Cookies.get("callId")
+  });
   const [agentStatus, setAgentStatus] = useState<string>("resume");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -299,9 +307,9 @@ const FinishLead = (props: FinishLeadProps) => {
             campaign_uuid: selectedCampaign,
             feature: "submit",
             lead_status: values.lead_status,
-            lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             campaign_type: "0",
-            custom_callid: customCallId ? customCallId : "",
+            custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
           };
           if (agentStatus !== "pause") {
             await dispatch(callQueueInbound(payloadData)).unwrap();
@@ -369,7 +377,7 @@ const FinishLead = (props: FinishLeadProps) => {
         from_number:
           activeConversation?.[getMessageFromNumber(activeConversation)],
         note: values.comment,
-        lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+        lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
         type: chatModeType === "pbx" ? 1 : 0,
         channel_identifiers: activeConversation?.channel_identifiers,
         channel_type: activeConversation?.channel_type
@@ -427,9 +435,9 @@ const FinishLead = (props: FinishLeadProps) => {
         if (values.comment !== "") {
           let data = {
             comment: values.comment,
-            lead_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
-            cdrs_uuid: addNoteId ? addNoteId : Cookies.get("callId") ? Cookies.get("callId") : "",
+            cdrs_uuid: capturedIds.current.addNoteId ? capturedIds.current.addNoteId : capturedIds.current.cookieCallId ? capturedIds.current.cookieCallId : "",
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
@@ -440,9 +448,9 @@ const FinishLead = (props: FinishLeadProps) => {
           lead_status: dispositionCause ? dispositionCause : values.lead_status,
           lead_status_1: dispositionCause ? dispositionCause : values.lead_status_1,
           lead_status_2: dispositionCause ? dispositionCause : values.lead_status_2,
-          lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+          lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
           campaign_type: campaignType === "inbound" ? "" : "2",
-          custom_callid: customCallId ? customCallId : "",
+          custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
         };
         if (agentStatus !== "pause") {
           response = await dispatch(callQueueInbound(payload)).unwrap();
@@ -487,9 +495,9 @@ const FinishLead = (props: FinishLeadProps) => {
         let response: any;
         let res: any;
 
-        if (!!addLeadNoteId) {
+        if (!!capturedIds.current.addLeadNoteId) {
           let payload: any = {
-            lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             lead_status: dispositionCause ? dispositionCause : values.lead_status,
             lead_status_1: dispositionCause ? dispositionCause : values.lead_status_1,
             lead_status_2: dispositionCause ? dispositionCause : values.lead_status_2,
@@ -497,7 +505,7 @@ const FinishLead = (props: FinishLeadProps) => {
             custom_phone_number: Cookies.get("phone_number") || "",
             campaign_uuid: selectedCampaign,
             pause: agentStatus === "pause" ? "true" : "false",
-            custom_callid: customCallId ? customCallId : "",
+            custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
           };
           if (campaignType === "outbound" || campaignType === "blended") {
             payload["campaign_flag"] = campaignType;
@@ -510,24 +518,27 @@ const FinishLead = (props: FinishLeadProps) => {
         if (values.comment !== "") {
           let data = {
             comment: values.comment,
-            lead_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
-            cdrs_uuid: addNoteId ? addNoteId : Cookies.get("callId") ? Cookies.get("callId") : "",
+            cdrs_uuid: capturedIds.current.addNoteId ? capturedIds.current.addNoteId : capturedIds.current.cookieCallId ? capturedIds.current.cookieCallId : "",
+
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
         if (
-          !!addLeadNoteId && values.comment !== ""
+          !!capturedIds.current.addLeadNoteId && values.comment !== ""
             ? res &&
             res.statusCode === 201 &&
             response &&
             response.statusCode === 200
-            : !!!addLeadNoteId && values.comment !== ""
+            : !!!capturedIds.current.addLeadNoteId && values.comment !== ""
               ? res && res.statusCode === 201
-              : !!addLeadNoteId &&
-              values.comment === "" &&
-              response &&
-              response.statusCode === 200
+              : !!capturedIds.current.addLeadNoteId &&
+                values.comment === "" &&
+                response &&
+                response.statusCode === 200
+                ? true
+                : !!!capturedIds.current.addLeadNoteId && values.comment === ""
         ) {
           // Success(!!addLeadNoteId ? response?.data : res.data);
           dispatch(onSetDialType("manualDial"));
@@ -545,8 +556,8 @@ const FinishLead = (props: FinishLeadProps) => {
               campaign_uuid: selectedCampaign,
               feature: "submit",
               lead_status: dispositionCause ? dispositionCause : values.lead_status,
-              lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
-              custom_callid: customCallId ? customCallId : "",
+              lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+              custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
               campaign_type:
                 campaignType === "inbound"
                   ? ""
