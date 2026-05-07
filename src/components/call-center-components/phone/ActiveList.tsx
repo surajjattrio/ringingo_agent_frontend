@@ -347,6 +347,7 @@ const ActiveList = ({
         dispatch(onSetAddNoteId(null));
         dispatch(setIsCallHangUp(false));
         dispatch(clearLeadUuid());
+        setData([]);
       }
     } catch (error: any) {
       console.log("Get lead Info Err--->", error?.message);
@@ -614,7 +615,7 @@ const ActiveList = ({
                           onClick={async () => {
                             try {
                               const res: any = await getWabaSsoTokenPost();
-                              debugger
+                              // debugger
                               const redirectUrl = res?.data?.redirect_url;
                               if (redirectUrl) {
                                 window.open(redirectUrl, "_blank");
@@ -889,7 +890,7 @@ const ActiveList = ({
             </>
           ) : null} */}
         </div>
-        {!data?.length && !callQueueList?.length ? (
+        {(!data?.length && !callQueueList?.length || Array.isArray(allLeadsDetails) && allLeadsDetails.length === 0 ) ? (
           <>{renderDataNotFound()}</>
         ) : (
           <>{renderActiveList()}</>
