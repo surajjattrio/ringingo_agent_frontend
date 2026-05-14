@@ -36,7 +36,7 @@ interface InitialState {
   singleLeadDetails: any;
   singleChatLeadDetails: any;
   leadUuid: string | null;
-  callWaitingCount:any;
+  callWaitingCount: any;
   customCallId: string | null;
 }
 
@@ -53,7 +53,7 @@ const initialState: InitialState = {
   singleLeadDetails: {},
   singleChatLeadDetails: {},
   leadUuid: null,
-  callWaitingCount : {},
+  callWaitingCount: {},
   customCallId: null,
 };
 
@@ -81,7 +81,6 @@ export const getAllLeads = createAsyncThunk(
 export const getSingleLead = createAsyncThunk(
   "phone/single-lead",
   async (id: string) => {
-    console.log("mai chalra hu"); 
     return await singleLeadGet(id);
   }
 );
@@ -143,7 +142,7 @@ export const dialManual = createAsyncThunk(
 export const blackListCallCenter = createAsyncThunk(
   "agent-call-center/add-blacklist-entry",
   async (payload: any) => {
-return await blackList(payload);
+    return await blackList(payload);
   }
 );
 
@@ -151,7 +150,7 @@ return await blackList(payload);
 export const fetchCallWaitingCount = createAsyncThunk(
   "realtime-report/fetchCallWaitingCount",
   async (params: any) => {
-      return await getCallwaitingCount(params);
+    return await getCallwaitingCount(params);
   }
 );
 
@@ -161,8 +160,6 @@ const callCenterPhoneSlice = createSlice({
   reducers: {
     clearCallCenterPhoneSlice: () => initialState,
     changeLeadDetails(state, action) {
-      console.log(action?.payload,'action payload');
-      
       state.allLeadsDetails = action.payload || [];
     },
     clearSingleLeadDetails(state) {
@@ -181,6 +178,9 @@ const callCenterPhoneSlice = createSlice({
     },
     clearCustomCallId(state) {
       state.customCallId = null;
+    },
+    setCustomCallId(state, action) {
+      state.customCallId = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -218,10 +218,10 @@ const callCenterPhoneSlice = createSlice({
                     : "0" + newTime.seconds)
                   }`;
                 val.day = `${day === "0 days"
-                    ? "Today"
-                    : day === "1 days"
-                      ? "Yesterday"
-                      : day + " ago"
+                  ? "Today"
+                  : day === "1 days"
+                    ? "Yesterday"
+                    : day + " ago"
                   }`;
                 val.destination_number = val.destination_number
                   .replace("\\", "")
@@ -255,10 +255,10 @@ const callCenterPhoneSlice = createSlice({
               { unit: "day" }
             );
             (val.day = `${day === "0 days"
-                ? "Today"
-                : day === "1 days"
-                  ? "Yesterday"
-                  : day + " ago"
+              ? "Today"
+              : day === "1 days"
+                ? "Yesterday"
+                : day + " ago"
               }`),
               (val.date = format(new Date(val?.createdAt), "dd/MM/yyyy")),
               (val.time = format(new Date(val?.createdAt), "h:mm a")),
@@ -285,8 +285,6 @@ const callCenterPhoneSlice = createSlice({
           state.leadUuid = null;
           state.isAllLeadsLoading = false;
         } else {
-          console.log(action?.payload,'action.payloay');
-          
           const newData = action.payload.data?.lead_details;
           const outbound_campaign_details =
             action.payload.data?.outbound_campaign_details;
@@ -313,7 +311,7 @@ const callCenterPhoneSlice = createSlice({
         } else {
           const newData = action.payload;
           // console.log("items newDatanewData",newData);
-          
+
           state.allHangupCause = newData.map((val: any) => ({
             value:
               val.disposition_uuid || val.outbound_campaign_disposition_uuid,
@@ -348,12 +346,12 @@ const callCenterPhoneSlice = createSlice({
         }
       }
     );
-       // Add case to handle fulfilled action of fetching call waiting count data
-       builder.addCase(
-        fetchCallWaitingCount.fulfilled, 
-        (state, action: PayloadAction<any>) => {
+    // Add case to handle fulfilled action of fetching call waiting count data
+    builder.addCase(
+      fetchCallWaitingCount.fulfilled,
+      (state, action: PayloadAction<any>) => {
         state.callWaitingCount = action.payload;
-    });
+      });
     builder.addCase(
       getSingleLeadInfo.fulfilled,
       (state, action: PayloadAction<any>) => {
@@ -376,7 +374,8 @@ export const {
   clearLeadUuid,
   clearSingleLeadDetails,
   clearSingleChatLeadDetails,
-  clearCustomCallId
+  clearCustomCallId,
+  setCustomCallId
 } = callCenterPhoneSlice.actions;
 
 export const selectTop10Cdrs = (state: RootState) =>
@@ -450,10 +449,10 @@ export const useLeadUuid = () => {
 };
 
 // Selectors to access call waiting count data from the state
-export const selectCallWaitingCount = (state: RootState) => 
-state.callCenterPhone.callWaitingCount;
-export const useCallWaitingCount = () => 
-useAppSelector(selectCallWaitingCount);
+export const selectCallWaitingCount = (state: RootState) =>
+  state.callCenterPhone.callWaitingCount;
+export const useCallWaitingCount = () =>
+  useAppSelector(selectCallWaitingCount);
 
 export const selectCustomCallId = (state: RootState) =>
   state.callCenterPhone.customCallId;

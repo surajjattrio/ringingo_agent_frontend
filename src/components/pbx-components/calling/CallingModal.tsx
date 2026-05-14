@@ -50,6 +50,7 @@ import {
   dialManual,
   getSingleLead,
   reportAdd,
+  setCustomCallId,
 } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import {
   callQueueInbound,
@@ -1682,6 +1683,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
       } else {
         receiveCall();
         Cookies.set("callId", callerId);
+        dispatch(setCustomCallId(callerId));
         dispatch(onSetAddNoteId(callerId));
       }
       setCallType("Outgoing Call To");
@@ -1779,6 +1781,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
           setupRemoteMedia(invitation); //	Media audio control
           callDuration(true); //	Call duration
           Cookies.set("callId", callerId);
+          dispatch(setCustomCallId(callerId));
           dispatch(onSetAddNoteId(callerId));
           setAddNoteShowCallDuration(true);
           callKeypadSiderProperties("callEstablished", "Established"); //	On answer manage keypadsider states
@@ -2431,6 +2434,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
                 }
                 console.log("id-------->", id);
                 Cookies.set("callId", id);
+                dispatch(setCustomCallId(id));
                 dispatch(onSetAddNoteId(id));
 
                 // callerTuneplay.play(); //	Caller tune play
