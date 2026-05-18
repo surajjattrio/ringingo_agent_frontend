@@ -9,6 +9,8 @@ import {
   useCampaignMode,
   useCampaignType,
   onSelectCampaignDetails,
+  useIsShowCallDuration,
+  useCallScreen,
 } from "@/redux/slice/commonSlice";
 import CallingModal from "@/components/pbx-components/calling/CallingModal";
 import Header from "./Header";
@@ -86,6 +88,28 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
   const [isOpenConfirmBreak, setIsOpenConfirmBreak] = useState<boolean>(false);
 
+  const [showCampaignUpdatedModal, setShowCampaignUpdatedModal] = useState<boolean>(false);
+  const isShowCallDuration = useIsShowCallDuration();
+  const callScreen = useCallScreen();
+  const isCallActive = isShowCallDuration || callScreen === "LIVE";
+
+  const selectedCampaignRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedCampaignRef.current = selectedCampaign;
+    if (selectedCampaign) {
+      const isUpdated = localStorage.getItem("campaign_updated_" + selectedCampaign);
+      if (isUpdated === "true") {
+        setShowCampaignUpdatedModal(true);
+      } else {
+        setShowCampaignUpdatedModal(false);
+      }
+    } else {
+      setShowCampaignUpdatedModal(false);
+    }
+  }, [selectedCampaign]);
+
+
+
   const socketRef = useRef<any>(null);
   socketRef.current = getSocket(user);
   // console.log("socket cnnecteddddd",socketRef.current);
@@ -155,6 +179,12 @@ useEffect(() => {
       } else if (event.type === "OFF_BREAK") {
         onBackToWork();
         setBreakStatus(false)
+      } else if (event.type === "CAMPAIGN_UPDATED") {
+        console.log("Campaign update received over socket:", event.payload);
+        if (event.payload?.campaign_uuid && event.payload.campaign_uuid === selectedCampaignRef.current) {
+          setShowCampaignUpdatedModal(true);
+          localStorage.setItem("campaign_updated_" + selectedCampaignRef.current, "true");
+        }
       }
     };
 
@@ -464,6 +494,24 @@ useEffect(() => {
             } tsm:pl-3 relative overflow-hidden`}
         > */}
           <div className="h-full flex flex-col">
+            {showCampaignUpdatedModal && (
+              <div className="mb-4 animate-fade-in pr-2">
+                <div className="bg-gradient-to-r from-[#f59e0b] to-[#e11d48] text-white px-6 py-3 rounded-[10px] shadow-lg flex items-center justify-between border border-[#f59e0b]/20">
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                    </span>
+                    <span className="text-sm font-semibold tracking-wide font-sans">
+                      {isCallActive 
+                        ? "Campaign settings updated by administrator. Please finish your call. After that, please logout and login."
+                        : "Campaign settings updated by administrator. Please logout and login."
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex-1 rounded-[10px] overflow-auto scrollbar-hide">
               {children}
             </div>
