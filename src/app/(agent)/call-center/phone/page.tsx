@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/hooks/useAuth";
 import { isWhatsAppEnabled } from "@/components/helperFunctions";
 import { getCampaign, getCampaignList, getCampaignOption, updateAgentCampaign } from "@/redux/slice/campaignSlice";
 import ActiveList from "@/components/call-center-components/phone/ActiveList";
-import { getAllLeads, useAllLeadDetails, useSingleLeadDetails  } from "@/redux/slice/callCenter/callCenterPhoneSlice";
+import { getAllLeads, useAllLeadDetails, useSingleLeadDetails } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import { LoginAgentCampaignKey, setLoginAgentCampaign } from "@/utils/Storage";
 import { Warning } from "@/redux/services/toasterService";
 import Cookies from "js-cookie";
@@ -102,22 +102,22 @@ export default function Phone() {
     return agentScriptText.replace(/(?:<|&lt;|\[|\{)(.*?)(?:>|&gt;|\]|\})/g, (match, variableName) => {
       // Create a simplified alphanumeric-only key to ignore spaces, dashes, underscores or casing
       const simplifiedSearchKey = variableName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      
+
       // 1. Agent Match
       if (simplifiedSearchKey === 'agentname') {
         const loginName = user?.agent_detail?.username || '';
         const agentName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || loginName;
         return agentName || match;
       }
-      
+
       if (!currentLeadDetails) return match;
-      
+
       // 2. Customer Match (First + Last Name combined)
       if (simplifiedSearchKey === 'customername') {
         const customerName = `${currentLeadDetails?.first_name || ''} ${currentLeadDetails?.last_name || ''}`.trim();
         return customerName || match;
       }
-      
+
       // 3. Direct Lead Field Match (e.g., <first_name> -> firstname)
       const directFieldKey = Object.keys(currentLeadDetails).find(
         k => k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === simplifiedSearchKey
@@ -125,19 +125,19 @@ export default function Phone() {
       if (directFieldKey && currentLeadDetails[directFieldKey] !== undefined && currentLeadDetails[directFieldKey] !== null && currentLeadDetails[directFieldKey] !== "") {
         return currentLeadDetails[directFieldKey];
       }
-      
+
       // 4. Custom Fields Match
       if (currentLeadDetails.custom_fields) {
         const customFieldKey = Object.keys(currentLeadDetails.custom_fields).find(k => {
           const simplifiedK = k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
           return simplifiedK === simplifiedSearchKey || simplifiedK === 'cf' + simplifiedSearchKey || 'cf' + simplifiedK === simplifiedSearchKey;
         });
-        
+
         if (customFieldKey && currentLeadDetails.custom_fields[customFieldKey] !== undefined && currentLeadDetails.custom_fields[customFieldKey] !== null && currentLeadDetails.custom_fields[customFieldKey] !== "") {
           return currentLeadDetails.custom_fields[customFieldKey];
         }
       }
-      
+
       // 5. Unmatched
       return match;
     });
@@ -346,11 +346,11 @@ export default function Phone() {
   //const { user } = useAuth();
 
   useEffect(() => {
-    if (selectedCampaign) {
-      dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
-    } else {
+    // if (selectedCampaign) {
+    //   dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+    // } else {
       dispatch(onUnSelectCampaign());
-    }
+    // }
   }, [selectedCampaign]);
 
   return (
@@ -362,9 +362,9 @@ export default function Phone() {
       >
         {/* LEFT PANEL (Now has history instead of ActiveList) */}
         <div className="w-4/12 flex flex-col gap-4">
-          <div className="bg-white rounded-[10px] shadow-md p-4">
+          {/* <div className="bg-white rounded-[10px] shadow-md p-4">
             <WaitingCalls />
-          </div>
+          </div> */}
           <div className="bg-white rounded-[10px] shadow-md p-4">
             <CallSummaryCards />
           </div>
@@ -395,6 +395,9 @@ export default function Phone() {
             className="flex gap-4"
           // style={{ gridTemplateColumns: "50% 50%" }}
           >
+            <div className="bg-white rounded-[10px] shadow-md p-4 w-1/2 h-[460px] flex flex-col">
+              <LeadInformationTab />
+            </div>
             <div className="p-4 bg-white rounded-[10px] shadow-md h-[460px] w-1/2 flex flex-col">
               {agentScript === "0" && (
                 <div className="flex flex-col shrink-0 border-b border-gray-100 pb-2 mb-2">
@@ -416,7 +419,7 @@ export default function Phone() {
                   </div>
 
                   {showScript && agentScriptText && (
-                    <div className="mt-1 p-2 bg-blue-50 border border-blue-100 rounded-md overflow-y-auto h-[100px] min-h-[50px] max-h-[300px] resize-y overflow-x-hidden">
+                    <div className="mt-1 p-2 bg-blue-50 border border-blue-100 rounded-md overflow-y-auto h-[235px] min-h-[50px] max-h-[300px] resize-y overflow-x-hidden">
                       <p className="text-xs text-[#000] whitespace-pre-wrap font-bold break-words">
                         {parsedAgentScript}
                       </p>
@@ -432,15 +435,12 @@ export default function Phone() {
                 />
               </div>
             </div>
-            <div className="bg-white rounded-[10px] shadow-md p-4 w-1/2 h-[460px] flex flex-col">
-              <LeadInformationTab />
-            </div>
           </div>
 
           {/* Full-width CrmInformation */}
-          <div className="w-full bg-white rounded-[10px] shadow-md p-4 min-h-[220px]">
+          {/*<div className="w-full bg-white rounded-[10px] shadow-md p-4 min-h-[220px]">
             <CrmInformation />
-          </div>
+          </div>*/}
         </div>
       </div>
     </SocketProvider>

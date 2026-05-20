@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState, Fragment, useRef } from "react";
 import Image from "next/image";
 
 // PROJECT IMPORTS
@@ -49,7 +49,8 @@ import {
 import { useAuth } from "@/contexts/hooks/useAuth";
 import {
   endChat,
-  getActiveUnreadChat,
+  // getActiveUnreadChat,
+  getAgentTodayStats,
   useActiveConversation,
   useChatMode,
   useIsActiveChat,
@@ -60,7 +61,7 @@ import { getMessageFromNumber } from "@/components/helperFunctions";
 import Cookies from "js-cookie";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { Disclosure } from "@headlessui/react";
+import { Disclosure, Transition } from "@headlessui/react";
 import { FollowUpModal } from "@/components/modals";
 
 // ASSETS
@@ -80,30 +81,29 @@ const DispositionTree = (props: DispositionTreeProps) => {
   const { items, onSelect } = props;
 
   return (
-    <ul className="pl-2 space-y-1">
+    <ul className="space-y-1.5">
       {items.map((item: any) => (
-        <li key={item.disposition_uuid || item.value}>
+        <li key={item.disposition_uuid || item.value} className="group">
           {item.has_children ? (
-            // ✅ When item has children: text + arrow both toggle Disclosure
             <Disclosure>
               {({ open }) => (
                 <>
-                  <div className="">
-                    {/* CHANGED: span -> Disclosure.Button as="span" */}
+                  <div className="flex items-center justify-between rounded-lg hover:bg-gray-50 transition-all duration-200">
                     <Disclosure.Button
                       as="span"
-                      className="cursor-pointer hover:underline"
+                      className="flex-1 px-3 py-2 text-sm cursor-pointer text-gray-700 hover:text-primary font-medium"
                     >
                       {item.label || item.name}
                     </Disclosure.Button>
 
-                    <Disclosure.Button className="text-xs px-2 py-1 text-gray-500">
-                      {open ? "▼" : "▶"}
+                    <Disclosure.Button className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                      <span className={`block transform transition-transform duration-200 ${open ? "rotate-90" : ""}`}>
+                        ▶
+                      </span>
                     </Disclosure.Button>
                   </div>
-                  <Disclosure.Panel>
-                    {/* Indent nested list */}
-                    <div className="pl-4 mt-1 border-l border-gray-200">
+                  <Disclosure.Panel className="transition-all duration-300 ease-in-out">
+                    <div className="ml-4 mt-1 border-l-2 border-gray-100 pl-3 py-1">
                       <DispositionTree
                         items={item.children || []}
                         onSelect={onSelect}
@@ -114,16 +114,14 @@ const DispositionTree = (props: DispositionTreeProps) => {
               )}
             </Disclosure>
           ) : (
-            // ✅ When no children: keep your original behavior exactly
-            <div className="">
-              <span
-                className="cursor-pointer hover:underline"
-                onClick={() => {
-                  onSelect(item);
-                }}
-              >
-                {item.label || item.name}
-              </span>
+            <div
+              className="px-3 py-2 text-sm cursor-pointer text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg transition-all duration-200 flex items-center group/item"
+              onClick={() => {
+                onSelect(item);
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-transparent group-hover/item:bg-primary mr-2 transition-all"></span>
+              {item.label || item.name}
             </div>
           )}
         </li>
@@ -157,15 +155,60 @@ const FinishLead = (props: FinishLeadProps) => {
   const dispositionTimerEnded = useDispositionTimerEnded();
   const selectedCampaignDetails = useSelectedCampaignDetails();
   const customCallId = useCustomCallId();
-console.log("customCallId", customCallId)
+  console.log("customCallId", customCallId)
 
   const campaignMode = useCampaignMode();
+
+  // Capture IDs on mount to prevent race conditions with subsequent calls
+  const capturedIds = useRef({
+    addLeadNoteId,
+    addNoteId,
+    customCallId,
+    cookieCallId: Cookies.get("callId")
+  });
   const [agentStatus, setAgentStatus] = useState<string>("resume");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [followUpModal, setFollowUpModal] = useState<boolean>(false);
   const [isFollowUpData, setIsFollowUpData] = useState<any>();
   const [dispoName, setDispoName] = useState<any>();
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Filter function for recursive disposition tree
+  const filterDispositions = (items: any[], term: string): any[] => {
+    if (!term) return items;
+    return items.reduce((acc: any[], item: any) => {
+      const label = (item.label || item.name || "").toLowerCase();
+      const isMatch = label.includes(term.toLowerCase());
+      const filteredChildren = item.children ? filterDispositions(item.children, term) : [];
+
+      if (isMatch || filteredChildren.length > 0) {
+        acc.push({
+          ...item,
+          children: filteredChildren,
+        });
+      }
+      return acc;
+    }, []);
+  };
+
+  const filteredHangupCases = filterDispositions(hangupCases || [], searchTerm);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowModal(false);
+        setSearchTerm("");
+      }
+    };
+    if (showModal) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showModal]);
 
   const initialValues: any = {
     lead_status: "",
@@ -264,9 +307,9 @@ console.log("customCallId", customCallId)
             campaign_uuid: selectedCampaign,
             feature: "submit",
             lead_status: values.lead_status,
-            lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             campaign_type: "0",
-	    custom_callid: customCallId ? customCallId : "",
+            custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
           };
           if (agentStatus !== "pause") {
             await dispatch(callQueueInbound(payloadData)).unwrap();
@@ -334,7 +377,7 @@ console.log("customCallId", customCallId)
         from_number:
           activeConversation?.[getMessageFromNumber(activeConversation)],
         note: values.comment,
-        lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+        lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
         type: chatModeType === "pbx" ? 1 : 0,
         channel_identifiers: activeConversation?.channel_identifiers,
         channel_type: activeConversation?.channel_type
@@ -343,7 +386,11 @@ console.log("customCallId", customCallId)
         data.disposition_uuid = values.lead_status;
       }
       await dispatch(endChat(data)).unwrap();
-      dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+      // dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+      dispatch(getAgentTodayStats({
+        uuid: user?.agent_detail?.uuid,
+        timezone: user?.timezone || "Asia/Kolkata"
+      }));
       setIsLoading(false);
       setIsHangUp(false);
       resetForm();
@@ -388,9 +435,9 @@ console.log("customCallId", customCallId)
         if (values.comment !== "") {
           let data = {
             comment: values.comment,
-            lead_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
-            cdrs_uuid: addNoteId ? addNoteId : Cookies.get("callId") ? Cookies.get("callId") : "",
+            cdrs_uuid: capturedIds.current.addNoteId ? capturedIds.current.addNoteId : capturedIds.current.cookieCallId ? capturedIds.current.cookieCallId : "",
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
@@ -401,9 +448,9 @@ console.log("customCallId", customCallId)
           lead_status: dispositionCause ? dispositionCause : values.lead_status,
           lead_status_1: dispositionCause ? dispositionCause : values.lead_status_1,
           lead_status_2: dispositionCause ? dispositionCause : values.lead_status_2,
-          lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+          lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
           campaign_type: campaignType === "inbound" ? "" : "2",
-	  custom_callid: customCallId ? customCallId : "",
+          custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
         };
         if (agentStatus !== "pause") {
           response = await dispatch(callQueueInbound(payload)).unwrap();
@@ -438,15 +485,19 @@ console.log("customCallId", customCallId)
           dispatch(onSetDialType("leadDial"));
           dispatch(onShowCallModal("true"));
           dispatch(clearCustomCallId());
+          dispatch(getAgentTodayStats({
+            uuid: user?.agent_detail?.uuid,
+            timezone: user?.timezone || "Asia/Kolkata"
+          }));
         }
       } else {
         console.log("OUTGOING CALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
         let response: any;
         let res: any;
 
-        if (!!addLeadNoteId) {
+        if (!!capturedIds.current.addLeadNoteId) {
           let payload: any = {
-            lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             lead_status: dispositionCause ? dispositionCause : values.lead_status,
             lead_status_1: dispositionCause ? dispositionCause : values.lead_status_1,
             lead_status_2: dispositionCause ? dispositionCause : values.lead_status_2,
@@ -454,7 +505,7 @@ console.log("customCallId", customCallId)
             custom_phone_number: Cookies.get("phone_number") || "",
             campaign_uuid: selectedCampaign,
             pause: agentStatus === "pause" ? "true" : "false",
-            custom_callid: customCallId ? customCallId : "",
+            custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
           };
           if (campaignType === "outbound" || campaignType === "blended") {
             payload["campaign_flag"] = campaignType;
@@ -467,29 +518,31 @@ console.log("customCallId", customCallId)
         if (values.comment !== "") {
           let data = {
             comment: values.comment,
-            lead_uuid: addLeadNoteId ? addLeadNoteId : "",
+            lead_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
-            cdrs_uuid: addNoteId ? addNoteId : Cookies.get("callId") ? Cookies.get("callId") : "",
+            cdrs_uuid: capturedIds.current.addNoteId ? capturedIds.current.addNoteId : capturedIds.current.cookieCallId ? capturedIds.current.cookieCallId : "",
+
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
         if (
-          !!addLeadNoteId && values.comment !== ""
+          !!capturedIds.current.addLeadNoteId && values.comment !== ""
             ? res &&
             res.statusCode === 201 &&
             response &&
             response.statusCode === 200
-            : !!!addLeadNoteId && values.comment !== ""
+            : !!!capturedIds.current.addLeadNoteId && values.comment !== ""
               ? res && res.statusCode === 201
-              : !!addLeadNoteId &&
-              values.comment === "" &&
-              response &&
-              response.statusCode === 200
+              : !!capturedIds.current.addLeadNoteId &&
+                values.comment === "" &&
+                response &&
+                response.statusCode === 200
+                ? true
+                : !!!capturedIds.current.addLeadNoteId && values.comment === ""
         ) {
           // Success(!!addLeadNoteId ? response?.data : res.data);
           dispatch(onSetDialType("manualDial"));
           setIsLoading(false);
-          (campaignMode === "0" || campaignMode === "2") && onGetLeadInfo();
           (campaignMode === "1" ||
             campaignMode === "3" ||
             campaignMode === "0") &&
@@ -503,8 +556,8 @@ console.log("customCallId", customCallId)
               campaign_uuid: selectedCampaign,
               feature: "submit",
               lead_status: dispositionCause ? dispositionCause : values.lead_status,
-              lead_management_uuid: addLeadNoteId ? addLeadNoteId : "",
-              custom_callid: customCallId ? customCallId : "",
+              lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+              custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
               campaign_type:
                 campaignType === "inbound"
                   ? ""
@@ -525,6 +578,14 @@ console.log("customCallId", customCallId)
           dispatch(onAddLeadNoteId(null));
           setIsHangUp(false)
           dispatch(clearCustomCallId());
+          dispatch(getAgentTodayStats({
+            uuid: user?.agent_detail?.uuid,
+            timezone: user?.timezone || "Asia/Kolkata"
+          }));
+          if (campaignMode === "2") {
+            await onGetLeadInfo();
+            dispatch(onShowLeadInfo(true));
+          }
         }
       }
     } catch (error) {
@@ -640,14 +701,86 @@ console.log("customCallId", customCallId)
                 <label className="col-span-2 text-heading 3xl:text-xs text-[11px] font-bold">
                   {!isChatLead() ? "Hang-up Cause" : "Disposition"}
                 </label>
-                <div className="col-span-3">
+                <div className="col-span-3 relative" ref={dropdownRef}>
                   <button
                     type="button"
-                    className={`w-full border text-left text-sm px-3 py-2 bg-white rounded-md shadow-sm ${touched.lead_status && errors.lead_status ? "!border-red-500" : "border-[#D1D5DB]"}`}
-                    onClick={() => setShowModal(true)}
+                    className={`w-full border flex items-center justify-between text-sm px-3 py-2 bg-white rounded-md shadow-sm transition-all ${touched.lead_status && errors.lead_status ? "!border-red-500" : "border-[#D1D5DB] hover:border-gray-400"}`}
+                    onClick={() => setShowModal(!showModal)}
                   >
-                    {dispoName || "Select"}
+                    <span className="truncate">{dispoName || "Select"}</span>
+                    <svg className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${showModal ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
+
+                  <Transition
+                    show={showModal}
+                    as={Fragment}
+                    enter="transition ease-out duration-200"
+                    enterFrom="opacity-0 translate-y-1"
+                    enterTo="opacity-100 translate-y-0"
+                    leave="transition ease-in duration-150"
+                    leaveFrom="opacity-100 translate-y-0"
+                    leaveTo="opacity-0 translate-y-1"
+                  >
+                    <div className="absolute top-full left-0 z-[100] mt-1 w-full min-w-[320px] bg-white rounded-lg shadow-2xl border border-gray-100 overflow-hidden">
+                      {/* Dropdown Header */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-b border-gray-100">
+                        <span className="text-sm font-bold text-gray-800">Select Hang-up Cause</span>
+                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+
+                      {/* Search Bar */}
+                      <div className="p-3 border-b border-gray-100">
+                        <div className="relative">
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </span>
+                          <input
+                            type="text"
+                            autoFocus
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                            placeholder="Search disposition..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Options List */}
+                      <div className="max-h-[350px] overflow-y-auto px-2 py-2">
+                        {filteredHangupCases.length > 0 ? (
+                          <DispositionTree
+                            items={filteredHangupCases}
+                            onSelect={(item: any) => {
+                              setDispoName(item?.label || item?.name)
+                              setValues({
+                                ...values,
+                                lead_status: item?.value || item?.disposition_uuid,
+                                code: item?.code,
+                              });
+                              setShowModal(false);
+                              setSearchTerm("");
+
+                              const selected = { ...item, lead_management_uuid: addLeadNoteId };
+                              if (selected?.callback == "0") {
+                                setIsFollowUpData(selected);
+                                setFollowUpModal(true);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="py-10 text-center">
+                            <p className="text-sm text-gray-400 italic">No results found for "{searchTerm}"</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Transition>
                 </div>
               </div>
             ) : null}
@@ -701,36 +834,7 @@ console.log("customCallId", customCallId)
             />
           </div>
 
-          {showModal && (
-            <div className="fixed top-0 right-0 w-[300px] h-full bg-white shadow-lg z-50 p-4 overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-base font-bold">{!isChatLead() ? "Select Hang-up Cause" : "Select Disposition"}</h2>
-                <button onClick={() => setShowModal(false)}>✕</button>
-              </div>
 
-              <DispositionTree
-                items={hangupCases}
-                onSelect={(item: any) => {
-                  setDispoName(item?.label || item?.name)
-                  setValues({
-                    ...values,
-                    // lead_status: item?.label || item?.name,
-                    lead_status: item?.value || item?.disposition_uuid,
-                    code: item?.code,
-                  });
-                  setShowModal(false);
-                  // console.log("selectedDisposition aiuwdbasbda", item)
-                  // ✅ If callback flag is "0", open follow-up modal immediately
-                  const selected = { ...item, lead_management_uuid: addLeadNoteId };
-                  if (selected?.callback == "0") {
-                    console.log("selectedDisposition callback trueeeee");
-                    setIsFollowUpData(selected);
-                    setFollowUpModal(true);
-                  }
-                }}
-              />
-            </div>
-          )}
           <FollowUpModal
             visible={!!isFollowUpData}
             onCancleClick={() => {
