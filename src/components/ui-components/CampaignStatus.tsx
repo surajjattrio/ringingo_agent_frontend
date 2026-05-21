@@ -1,34 +1,84 @@
-import { useCampaignType } from "@/redux/slice/commonSlice";
+import { useCampaignMode, useCampaignType } from "@/redux/slice/commonSlice";
 import { getLoginAgentCampaign } from "@/utils/Storage";
+
+// Map campaign mode value to human-readable label
+const getCampaignModeLabel = (mode: string): string => {
+    switch (mode) {
+        case "0": return "Manual";
+        case "1": return "Auto";
+        case "2": return "Preview";
+        case "3": return "Predictive";
+        default: return "Incoming";
+    }
+};
+
+// Map campaign mode value to text color classes
+const getCampaignModeColor = (mode: string): string => {
+    switch (mode) {
+        case "0": return "text-gray-600";       // Manual
+        case "1": return "text-green-700";      // Auto
+        case "2": return "text-purple-700";     // Preview
+        case "3": return "text-orange-700";     // Predictive
+        default: return "text-gray-600";
+    }
+};
 
 const CampaignStatus = () => {
     const LoginAgentCampaignName = getLoginAgentCampaign();
     const campaignType = useCampaignType();
+    const campaignMode = useCampaignMode();
+
+    const modeLabel = getCampaignModeLabel(campaignMode);
 
     // ✅ keep behavior: if no campaign, show nothing
     if (!LoginAgentCampaignName) return null;
     return (
         <>
-            <div className="flex items-center gap-2">
-                <span
-                    className={`h-2 w-2 rounded-full ${campaignType === "inbound"
-                            ? "bg-emerald-500"
-                            : campaignType === "outbound"
-                                ? "bg-blue-500"
-                                : "bg-amber-500"
-                        }`}
-                />
-                <span className="text-xs text-[#6B7280] font-medium">Campaign:</span>
-                <span
-                    className={`text-[10px] font-bold uppercase ${campaignType === "inbound"
-                            ? "text-emerald-500"
-                            : campaignType === "outbound"
-                                ? "text-blue-500"
-                                : "text-amber-500"
-                        }`}
-                >
-                    {LoginAgentCampaignName}
-                </span>
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <span
+                        className={`h-2 w-2 rounded-full ${campaignType === "inbound"
+                                ? "bg-emerald-500"
+                                : campaignType === "outbound"
+                                    ? "bg-blue-500"
+                                    : "bg-amber-500"
+                            }`}
+                    />
+                    <span className="text-xs text-[#6B7280] font-medium">Campaign:</span>
+                    <span
+                        className={`text-[10px] font-bold uppercase ${campaignType === "inbound"
+                                ? "text-emerald-500"
+                                : campaignType === "outbound"
+                                    ? "text-blue-500"
+                                    : "text-amber-500"
+                            }`}
+                    >
+                        {LoginAgentCampaignName}
+                    </span>
+                </div>
+
+                {modeLabel && (
+                    <div className="flex items-center gap-2">
+                        <span
+                            className={`h-2 w-2 rounded-full ${campaignMode === "0"
+                                    ? "bg-gray-500"
+                                    : campaignMode === "1"
+                                        ? "bg-green-700"
+                                        : campaignMode === "2"
+                                            ? "bg-purple-700"
+                                            : campaignMode === "3"
+                                                ? "bg-orange-700"
+                                                : "bg-emerald-500"
+                                }`}
+                        />
+                        <span className="text-xs text-[#6B7280] font-medium">Dial Method:</span>
+                        <span
+                            className={`text-[10px] font-bold uppercase ${getCampaignModeColor(campaignMode)}`}
+                        >
+                            {modeLabel}
+                        </span>
+                    </div>
+                )}
             </div>
         </>
     );

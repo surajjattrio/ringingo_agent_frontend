@@ -42,6 +42,7 @@ import { useAuth } from "@/contexts/hooks/useAuth";
 import { userAgentUnRegistration } from "@/components/pbx-components/calling/CallingModal";
 import { CampaignModal } from "@/components/modals";
 import Cookies from "js-cookie";
+import { setLoginAgentCampaign } from "@/utils/Storage";
 import Options from "@/components/call-center-components/header/Options";
 import { getAllLeadList } from "@/redux/slice/leadListSlice";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
@@ -174,12 +175,21 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
 
   useEffect(() => {
     console.log("campaignOptions", campaignOptions);
-    setSelectedCampaign(
-      campaignOptions?.find(
-        (i: any) => i.options[0]?.value === user?.agent_detail?.campaign_uuid
-      )?.options[0]
-    );
-  }, [campaignOptions]);
+    if (campaignOptions && user?.agent_detail?.campaign_uuid) {
+      let foundCampaign = null;
+      for (const group of campaignOptions) {
+        if (group.options) {
+          foundCampaign = group.options.find(
+            (opt: any) => opt.value === user.agent_detail.campaign_uuid
+          );
+          if (foundCampaign) break;
+        }
+      }
+      if (foundCampaign) {
+        setSelectedCampaign(foundCampaign);
+      }
+    }
+  }, [campaignOptions, user]);
 
   useEffect(() => {
     liveChatOption(0);
@@ -657,6 +667,10 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
     // dispatch(clearLeadDetails());
     dispatch(onAddLeadNoteId(null));
     dispatch(onSetAddNoteId(null));
+    if (e?.label) {
+      setLoginAgentCampaign(e?.label);
+      Cookies.set("login_agent_campaign_name", e?.label);
+    }
     // dispatch(onSelectCampaignMode(null));
     dispatch(onShowLeadInfo(true));
     dispatch(setIsInboundCampaign(false));
@@ -669,6 +683,7 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
       setNumberMasking(e ? (e?.number_masking === "0" ? true : false) : false)
     );
     dispatch(onSetCampaignType(e?.campaign));
+    Cookies.set("campaignType", e?.campaign);
     Cookies.set("isRecording", e?.recording);
 
     if (e?.campaign === "outbound" || e?.campaign === "blended") {
@@ -686,7 +701,8 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
       } else {
         dispatch(setPredictiveData({}));
       }
-      // dispatch(onSelectCampaignMode(e?.dial_method));
+      dispatch(onSelectCampaignMode(e?.dial_method));
+      Cookies.set("campaignMode", e?.dial_method);
       if (e?.dial_method === "1" || e?.dial_method === "3") {
         dispatch(onSetDialType("leadDial"));
         if (flag == 1) {

@@ -224,6 +224,7 @@ const LeadDialPage = (props: LeadDialPageProps) => {
         let interval = setInterval(() => {
             if (
                 // !user?.isPbx &&
+                campaignType !== "blended" &&
                 selectedCampaign &&
                 (campaignMode === "1" || campaignMode === "3") &&
                 !isCallResume &&
@@ -232,6 +233,19 @@ const LeadDialPage = (props: LeadDialPageProps) => {
             ) {
                 Cookies.set("call_status", "play");
                 onResumeCall();
+            }
+            else if (
+                // !user?.isPbx &&
+                campaignType === "blended" &&
+                selectedCampaign &&
+                (campaignMode === "1" || campaignMode === "3") &&
+                !isCallResume &&
+                !isCallHangUp &&
+                Cookies.get("is_call_start") === "1"
+            ) {
+                Cookies.set("call_status", "play");
+                onResumeCall();
+                onCallQueueInbound("resume");
             } else {
                 if (
                     // !user?.isPbx &&
