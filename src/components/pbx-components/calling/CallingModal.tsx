@@ -39,6 +39,7 @@ import {
   useSelectedCampaign,
   useSelectedCampaignDetails,
   useShowCallModal,
+  useUserEntry,
 } from "@/redux/slice/commonSlice";
 import {
   getCallStatistic,
@@ -256,6 +257,7 @@ const CallingModal = (props: CallingModelProps) => {
   const isCallHangUp = useIsCallHangUp();
   const callerNumber = useCallerNumber();
   const callerName = useCallerName();
+  const userEntry = useUserEntry();
 
   //  ---------------------------------------------------------
   // ✅ put near top of CallingModal()
@@ -359,15 +361,17 @@ const CallingModal = (props: CallingModelProps) => {
 
 
   useEffect(() => {
-    if (user?.isPbx) {
-      userAgentRegistration();
-    } else {
-      if (!isInboundCampaign) {
+    if (userEntry === "login-entry") {
+      if (user?.isPbx) {
         userAgentRegistration();
+      } else {
+        if (!isInboundCampaign) {
+          userAgentRegistration();
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInboundCampaign, campaignType]);
+  }, [isInboundCampaign, campaignType, userEntry]);
 
   useEffect(() => {
     // !user?.isPbx &&

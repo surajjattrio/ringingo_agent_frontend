@@ -264,8 +264,10 @@ useEffect(() => {
     let response: any = await dispatch(agentEntryAdd(payload)).unwrap();
 
     !user?.isPbx && onUpdateLiveAgentEntry("0");
+    dispatch(onStatusChange("0"));
     dispatch(onSetUserEntry("login-entry"));
 
+    /*
     let userAgent: any;
     let callScreen = "false";
     let username = user?.agent_detail?.extension_details[0]?.username;
@@ -349,6 +351,7 @@ useEffect(() => {
       .catch((error: any) => {
         console.log("Failed to connect user agent .... ", error);
       });
+    */
 
     clearInterval(breakInterval);
     // reconnect socket
