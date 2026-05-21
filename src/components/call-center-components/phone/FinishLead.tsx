@@ -159,13 +159,11 @@ const FinishLead = (props: FinishLeadProps) => {
 
   const campaignMode = useCampaignMode();
 
-  // Capture IDs on mount to prevent race conditions with subsequent calls
-  const capturedIds = useRef({
-    addLeadNoteId,
-    addNoteId,
-    customCallId,
-    cookieCallId: Cookies.get("callId")
-  });
+  // ─── REMOVED: capturedIds useRef ───────────────────────────────────────────
+  // The useRef was initialized once on mount and held stale IDs from the
+  // previous call. IDs are now snapshotted fresh at the moment each async
+  // function runs (see getSubmissionIds helper below).
+
   const [agentStatus, setAgentStatus] = useState<string>("resume");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -174,6 +172,20 @@ const FinishLead = (props: FinishLeadProps) => {
   const [dispoName, setDispoName] = useState<any>();
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Snapshot the current call's IDs at the moment of submission.
+   *
+   * Reading Redux state + cookies here (not from a stale ref captured on mount)
+   * guarantees we always operate on the CURRENT call's identifiers, even if the
+   * component stayed mounted across multiple calls.
+   */
+  const getSubmissionIds = () => ({
+    addLeadNoteId,
+    addNoteId,
+    customCallId,
+    cookieCallId: Cookies.get("callId"),
+  });
 
   // Filter function for recursive disposition tree
   const filterDispositions = (items: any[], term: string): any[] => {
@@ -257,7 +269,7 @@ const FinishLead = (props: FinishLeadProps) => {
     }
   }, [dispositionTimerEnded, selectedCampaignDetails]);
 
-  // GET LEAD INFORMATUON
+  // GET LEAD INFORMATION
   const onGetLeadInfo = async () => {
     dispatch(clearLeadUuid());
     try {
@@ -284,11 +296,14 @@ const FinishLead = (props: FinishLeadProps) => {
       };
       await dispatch(updateDialLevel(payload)).unwrap();
     } catch (error: any) {
-      console.log("dial lavel change Err --->", error?.message);
+      console.log("dial level change Err --->", error?.message);
     }
   };
 
   const onCallResume = async () => {
+    // ── Snapshot current IDs at the moment this function is called ──────────
+    const currentIds = getSubmissionIds();
+
     try {
       if (campaignMode === "1" || campaignMode === "3") {
         if (agentStatus !== "pause") {
@@ -307,9 +322,9 @@ const FinishLead = (props: FinishLeadProps) => {
             campaign_uuid: selectedCampaign,
             feature: "submit",
             lead_status: values.lead_status,
-            lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+            lead_management_uuid: currentIds.addLeadNoteId || "",
             campaign_type: "0",
-            custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
+            custom_callid: currentIds.customCallId || "",
           };
           if (agentStatus !== "pause") {
             await dispatch(callQueueInbound(payloadData)).unwrap();
@@ -339,7 +354,7 @@ const FinishLead = (props: FinishLeadProps) => {
         dispatch(clearCustomCallId());
       }
     } catch (error: any) {
-      console.log("call resume or push  Err --->", error?.message);
+      console.log("call resume or push Err --->", error?.message);
     }
   };
 
@@ -369,6 +384,9 @@ const FinishLead = (props: FinishLeadProps) => {
   };
 
   const onEndChat = async () => {
+    // ── Snapshot current IDs at the moment of submission ────────────────────
+    const currentIds = getSubmissionIds();
+
     dispatch(onLeadDispositionTimerEnded(false));
     setIsLoading(true);
     try {
@@ -377,7 +395,7 @@ const FinishLead = (props: FinishLeadProps) => {
         from_number:
           activeConversation?.[getMessageFromNumber(activeConversation)],
         note: values.comment,
-        lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+        lead_management_uuid: currentIds.addLeadNoteId || "",
         type: chatModeType === "pbx" ? 1 : 0,
         channel_identifiers: activeConversation?.channel_identifiers,
         channel_type: activeConversation?.channel_type
@@ -419,6 +437,12 @@ const FinishLead = (props: FinishLeadProps) => {
 
   const onFinishLead = async (dispositionCause?: string) => {
     // console.log("dispositionCause", values);
+    // ── Snapshot current IDs at the moment of submission ────────────────────
+    // This is the critical fix: by reading addLeadNoteId, addNoteId,
+    // customCallId, and the cookie HERE (not from a ref captured on mount),
+    // we always use the CURRENT call's identifiers regardless of how long
+    // the component has been mounted or how many calls have passed through it.
+    const currentIds = getSubmissionIds();
 
     dispatch(onLeadDispositionTimerEnded(false));
     setIsLoading(true);
@@ -435,9 +459,9 @@ const FinishLead = (props: FinishLeadProps) => {
         if (values.comment !== "") {
           let data = {
             comment: values.comment,
-            lead_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+            lead_uuid: currentIds.addLeadNoteId || "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
-            cdrs_uuid: capturedIds.current.addNoteId ? capturedIds.current.addNoteId : capturedIds.current.cookieCallId ? capturedIds.current.cookieCallId : "",
+            cdrs_uuid: currentIds.addNoteId || currentIds.cookieCallId || "",
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
@@ -448,9 +472,9 @@ const FinishLead = (props: FinishLeadProps) => {
           lead_status: dispositionCause ? dispositionCause : values.lead_status,
           lead_status_1: dispositionCause ? dispositionCause : values.lead_status_1,
           lead_status_2: dispositionCause ? dispositionCause : values.lead_status_2,
-          lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+          lead_management_uuid: currentIds.addLeadNoteId || "",
           campaign_type: campaignType === "inbound" ? "" : "2",
-          custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
+          custom_callid: currentIds.customCallId || "",
         };
         if (agentStatus !== "pause") {
           response = await dispatch(callQueueInbound(payload)).unwrap();
@@ -495,9 +519,9 @@ const FinishLead = (props: FinishLeadProps) => {
         let response: any;
         let res: any;
 
-        if (!!capturedIds.current.addLeadNoteId) {
+        if (!!currentIds.addLeadNoteId) {
           let payload: any = {
-            lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+            lead_management_uuid: currentIds.addLeadNoteId || "",
             lead_status: dispositionCause ? dispositionCause : values.lead_status,
             lead_status_1: dispositionCause ? dispositionCause : values.lead_status_1,
             lead_status_2: dispositionCause ? dispositionCause : values.lead_status_2,
@@ -505,7 +529,7 @@ const FinishLead = (props: FinishLeadProps) => {
             custom_phone_number: Cookies.get("phone_number") || "",
             campaign_uuid: selectedCampaign,
             pause: agentStatus === "pause" ? "true" : "false",
-            custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
+            custom_callid: currentIds.customCallId || "",
           };
           if (campaignType === "outbound" || campaignType === "blended") {
             payload["campaign_flag"] = campaignType;
@@ -518,27 +542,27 @@ const FinishLead = (props: FinishLeadProps) => {
         if (values.comment !== "") {
           let data = {
             comment: values.comment,
-            lead_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
+            lead_uuid: currentIds.addLeadNoteId || "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
-            cdrs_uuid: capturedIds.current.addNoteId ? capturedIds.current.addNoteId : capturedIds.current.cookieCallId ? capturedIds.current.cookieCallId : "",
+            cdrs_uuid: currentIds.addNoteId || currentIds.cookieCallId || "",
 
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
         if (
-          !!capturedIds.current.addLeadNoteId && values.comment !== ""
+          !!currentIds.addLeadNoteId && values.comment !== ""
             ? res &&
             res.statusCode === 201 &&
             response &&
             response.statusCode === 200
-            : !!!capturedIds.current.addLeadNoteId && values.comment !== ""
+            : !!!currentIds.addLeadNoteId && values.comment !== ""
               ? res && res.statusCode === 201
-              : !!capturedIds.current.addLeadNoteId &&
+              : !!currentIds.addLeadNoteId &&
                 values.comment === "" &&
                 response &&
                 response.statusCode === 200
                 ? true
-                : !!!capturedIds.current.addLeadNoteId && values.comment === ""
+                : !!!currentIds.addLeadNoteId && values.comment === ""
         ) {
           // Success(!!addLeadNoteId ? response?.data : res.data);
           dispatch(onSetDialType("manualDial"));
@@ -556,8 +580,8 @@ const FinishLead = (props: FinishLeadProps) => {
               campaign_uuid: selectedCampaign,
               feature: "submit",
               lead_status: dispositionCause ? dispositionCause : values.lead_status,
-              lead_management_uuid: capturedIds.current.addLeadNoteId ? capturedIds.current.addLeadNoteId : "",
-              custom_callid: capturedIds.current.customCallId ? capturedIds.current.customCallId : "",
+              lead_management_uuid: currentIds.addLeadNoteId || "",
+              custom_callid: currentIds.customCallId || "",
               campaign_type:
                 campaignType === "inbound"
                   ? ""
@@ -576,7 +600,7 @@ const FinishLead = (props: FinishLeadProps) => {
           dispatch(clearLeadDetails());
           dispatch(onSetAddNoteId(null));
           dispatch(onAddLeadNoteId(null));
-          setIsHangUp(false)
+          setIsHangUp(false);
           dispatch(clearCustomCallId());
           dispatch(getAgentTodayStats({
             uuid: user?.agent_detail?.uuid,
@@ -628,7 +652,7 @@ const FinishLead = (props: FinishLeadProps) => {
       // Dynamically update the form values
       setValues((prevValues: any) => ({
         ...prevValues,
-        [`lead_status_${level}`]: data?.disposition_uuid || ""
+        [`lead_status_${level}`]: data?.disposition_uuid || "",
       }));
 
       // Only continue if there is actually a parent
@@ -757,7 +781,7 @@ const FinishLead = (props: FinishLeadProps) => {
                           <DispositionTree
                             items={filteredHangupCases}
                             onSelect={(item: any) => {
-                              setDispoName(item?.label || item?.name)
+                              setDispoName(item?.label || item?.name);
                               setValues({
                                 ...values,
                                 lead_status: item?.value || item?.disposition_uuid,
@@ -839,7 +863,7 @@ const FinishLead = (props: FinishLeadProps) => {
             visible={!!isFollowUpData}
             onCancleClick={() => {
               setIsFollowUpData("");
-              setFollowUpModal(false)
+              setFollowUpModal(false);
             }}
             data={isFollowUpData}
             fromCallCenter
