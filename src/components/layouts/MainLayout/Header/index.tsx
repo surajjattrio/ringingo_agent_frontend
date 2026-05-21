@@ -69,6 +69,8 @@ import { getSocket } from "@/config/socket";
 import NetworkStatus from "@/components/ui-components/NetworkStatus";
 import WebRtcStatus from "@/components/ui-components/WebRtcStatus";
 import CampaignStatus from "@/components/ui-components/CampaignStatus";
+import AgentStatus from "@/components/ui-components/AgentStatus";
+
 
 // ASSETS
 const menuArrow = "/assets/icons/menu-arrow.svg";
@@ -763,6 +765,7 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
             <WebRtcStatus />
             <NetworkStatus />
             <CampaignStatus />
+            <AgentStatus />
             {user?.permission?.breakcode === "0" && (
               <div>
                 <BreakSelection
