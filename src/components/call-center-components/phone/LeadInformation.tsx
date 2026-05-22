@@ -29,6 +29,7 @@ import {
   useIsActiveChat,
 } from "@/redux/slice/chatSlice";
 import Search from "@/components/pbx-components/phone/Search";
+import { truncateName } from "@/components/helperFunctions";
 
 // THIRD-PARTY IMPORT
 import Cookies from "js-cookie";
@@ -67,7 +68,7 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
   console.log(allLeadsDetails,'allLeadsDetails')
 
   // ✅ Prevent duplicate API calls
-  const hasFetchedLeads = useRef(false);
+  const hasFetchedLeads = useRef<string | null>(null);
 
   // Get active lead details depending on chat/call
   const currentLeadDetails = useMemo(() => {
@@ -82,12 +83,13 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
     const leadInfoCookie = Cookies.get("lead_information");
 
     if (
-      !hasFetchedLeads.current && // ✅ only once
       selectedCampaign &&
       (campaignMode === "0" || campaignMode === "2") &&
       leadInfoCookie === "0"
     ) {
-      hasFetchedLeads.current = true; // lock to prevent rerun
+      // ✅ We only start fetching/polling if we haven't for this specific campaign
+      if (hasFetchedLeads.current !== selectedCampaign) {
+        hasFetchedLeads.current = selectedCampaign;
       dispatch(
         getAllLeads({
           campaign_uuid: selectedCampaign,
@@ -98,6 +100,7 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
         .catch((err) => {
           console.log("Get lead Info Err--->", err?.message);
         });
+      }
     }
   }, [selectedCampaign, campaignMode, dispatch]);
 
@@ -113,9 +116,9 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
     }
   }, [currentLeadDetails, allLeadsDetails]);
 
-  useEffect(() => {
-    dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
-  }, [editLead]);
+  // useEffect(() => {
+  //   dispatch(getActiveUnreadChat({ campaign_uuid: selectedCampaign })).unwrap();
+  // }, [editLead]);
 
   const checkSelectedCampaign = () => {
     return chatModeType === "pbx" ? !!selectedCampaign : true;
@@ -147,8 +150,11 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
               <div className="px-4">
                 {/* Name + Actions */}
                 <div className="py-1 flex justify-between items-center">
-                  <label className="3xl:text-sm text-xs font-bold text-heading">
-                    {(data?.first_name || "") + " " + (data?.last_name || "")}
+                  <label 
+                    className="3xl:text-sm text-xs font-bold text-heading"
+                    title={(data?.first_name || "") + " " + (data?.last_name || "")}
+                  >
+                    {truncateName(data?.first_name || "") + " " + (data?.last_name || "")}
                   </label>
                   {activeConversation?.user_uuid && isActiveChat ? (
                     <Button

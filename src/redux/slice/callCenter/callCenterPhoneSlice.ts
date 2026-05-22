@@ -38,6 +38,7 @@ interface InitialState {
   leadUuid: string | null;
   callWaitingCount: any;
   customCallId: string | null;
+  pollingSessionId: string | null;
 }
 
 /* ============================== PHONE SLICE ============================== */
@@ -55,6 +56,7 @@ const initialState: InitialState = {
   leadUuid: null,
   callWaitingCount: {},
   customCallId: null,
+  pollingSessionId: null,
 };
 
 export const getTop10Records = createAsyncThunk(
@@ -73,8 +75,70 @@ export const getAllNotes = createAsyncThunk(
 
 export const getAllLeads = createAsyncThunk(
   "phone/all-leads",
-  async (params: any) => {
-    return await allLeadsGet(params);
+  async (params: any, thunkAPI) => {
+    const { signal, getState } = thunkAPI;
+    const isPollingMode = params.campaign_mode === "2";
+    const sessionId = Date.now().toString();
+
+    // ✅ Track this specific polling session
+    if (isPollingMode) {
+      thunkAPI.dispatch(setPollingSessionId(sessionId));
+    }
+
+    const delay = (ms: number) =>
+      new Promise((resolve, reject) => {
+        const timeout = setTimeout(resolve, ms);
+        signal.addEventListener("abort", () => {
+          clearTimeout(timeout);
+          reject(new Error("Aborted"));
+        }, { once: true });
+      });
+
+    while (!signal.aborted) {
+      // ✅ If a new polling session has started elsewhere, terminate this one
+      const currentSessionId = (getState() as any).callCenterPhone.pollingSessionId;
+      if (isPollingMode && currentSessionId !== sessionId) {
+        return;
+      }
+
+      try {
+        const response: any = await allLeadsGet(params);
+        // Success: Found a lead
+        if (response?.statusCode === 200 && response?.data) {
+          return response;
+        }
+
+        // If not in polling mode, return whatever we got immediately
+        if (!isPollingMode) return response;
+      } catch (error: any) {
+        if (signal.aborted) throw error;
+
+        const errorResponse = error?.response?.data;
+        // Termination condition: Specifically handle the 404 error response
+        if (
+          errorResponse?.statusCode === 404 &&
+          errorResponse?.data === "No more lead found from this campaign"
+        ) {
+          return errorResponse;
+        }
+
+        // If not in polling mode, rethrow the error
+        if (!isPollingMode) throw error;
+
+        console.error("Lead polling error, retrying...", error?.message || error);
+      }
+
+      thunkAPI.dispatch(setAllLeadsLoading(false));
+
+      // Wait 10 seconds before next poll (only for Mode 2)
+      await delay(10000);
+
+      if (!signal.aborted) {
+        thunkAPI.dispatch(setAllLeadsLoading(true));
+      }
+    }
+
+    throw new Error("Polling aborted");
   }
 );
 
@@ -158,6 +222,9 @@ const callCenterPhoneSlice = createSlice({
   name: "callCenterPhone",
   initialState,
   reducers: {
+    setPollingSessionId: (state, action: PayloadAction<string | null>) => {
+      state.pollingSessionId = action.payload;
+    },
     clearCallCenterPhoneSlice: () => initialState,
     changeLeadDetails(state, action) {
       state.allLeadsDetails = action.payload || [];
@@ -168,7 +235,10 @@ const callCenterPhoneSlice = createSlice({
     clearSingleChatLeadDetails(state) {
       state.singleChatLeadDetails = {};
     },
-    clearLeadDetails(state) {
+    setAllLeadsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isAllLeadsLoading = action.payload;
+    },
+    clearLeadDetails: (state) => {
       state.allLeadsDetails = [];
       state.singleLeadDetails = {};
       state.leadUuid = null;
@@ -275,6 +345,9 @@ const callCenterPhoneSlice = createSlice({
     builder
       .addCase(getAllLeads.pending, (state, action: PayloadAction<any>) => {
         state.isAllLeadsLoading = true;
+        state.allLeadsDetails = [];
+        state.singleLeadDetails = {};
+        state.leadUuid = null;
       })
       .addCase(getAllLeads.fulfilled, (state, action: PayloadAction<any>) => {
         if (typeof action.payload.data === "string") {
@@ -375,7 +448,8 @@ export const {
   clearSingleLeadDetails,
   clearSingleChatLeadDetails,
   clearCustomCallId,
-  setCustomCallId
+  setAllLeadsLoading,
+  setPollingSessionId,
 } = callCenterPhoneSlice.actions;
 
 export const selectTop10Cdrs = (state: RootState) =>

@@ -8,13 +8,13 @@ const WebRtcStatus = () => {
     const getStatusColor = () => {
         switch (status) {
             case "CONNECTED":
-                return "bg-green-500";
+                return "bg-emerald-500";
             case "CONNECTING":
-                return "bg-yellow-500 animate-pulse";
+                return "bg-amber-500 animate-pulse";
             case "DISCONNECTED":
                 return "bg-red-500";
             case "ERROR":
-                return "bg-orange-600";
+                return "bg-rose-600";
             default:
                 return "bg-gray-400";
         }
@@ -38,28 +38,28 @@ const WebRtcStatus = () => {
     const getTextColor = () => {
         switch (status) {
             case "CONNECTED":
-                return "text-green-600";
+                return "text-emerald-500";
             case "CONNECTING":
-                return "text-yellow-700";
+                return "text-amber-600";
             case "DISCONNECTED":
-                return "text-red-600";
+                return "text-red-500";
             case "ERROR":
-                return "text-orange-700";
+                return "text-rose-600";
             default:
                 return "text-gray-600";
         }
     };
 
     return (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100 transition-all duration-300">
-            <div className="relative flex h-2.5 w-2.5">
-                {status === "CONNECTING" && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                )}
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${getStatusColor()}`}></span>
-            </div>
-            <span className={`text-xs font-semibold ${getTextColor()}`}>
-                {getStatusText()}
+        <div className="flex items-center gap-2">
+            <span
+                className={`h-2 w-2 rounded-full ${getStatusColor()}`}
+            />
+            <span className="text-xs text-[#6B7280] font-medium">WebRTC:</span>
+            <span
+                className={`text-[10px] font-bold uppercase ${getTextColor()}`}
+            >
+                {status || "Disconnected"}
             </span>
         </div>
     );

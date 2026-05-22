@@ -67,9 +67,11 @@ const LoginForm = () => {
   const logout = async () => {
     setIsLoading(true)
     try {
+      const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase() : domain;
+
       const res: any = await apiInstance.post(
         LOGIN_PAGE_LOGOUT,
-        { username: values?.username, domain: domain}
+        { username: values?.username, domain: currentDomain}
       );
       if (res && res?.statusCode === 200) {
         dispatch({
@@ -90,10 +92,12 @@ const LoginForm = () => {
   };
   const forceLogin = async (data:any) => {
     setIsLoading(true)
+          const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase()  : domain;
+
     try {
       const res: any = await apiInstance.post(
         FORCE_LOGIN,
-        { username: values?.username, domain: domain}
+        { username: values?.username, domain: currentDomain}
       );
       if (res && res?.statusCode === 200) {
       if(res?.message?.force_login==="0"){
@@ -182,6 +186,7 @@ const LoginForm = () => {
     username: "",
     password: "",
     tenant_domain: tenantPortal, // ::yaksh::
+company_code: "",
     browserToken: "",
     campaign_uuid: "", // <- new
     rememberMe: false,
@@ -191,6 +196,7 @@ const LoginForm = () => {
     username: Yup.string().required("Please enter your username"),
     password: Yup.string().required("Please enter your password"),
     campaign_uuid: Yup.string().required("Please select a campaign"),
+company_code: Yup.string().optional(),
   });
 
   // CALL REGISTRATION
@@ -282,10 +288,14 @@ const LoginForm = () => {
   // console.log("campaignOptions", campaignOptions);
 
 
-  const fetchAllowedCampaigns = async (username: string, domain: any) => {
+  const fetchAllowedCampaigns = async (username: string, domain: string, company_code?: string) => {
     if (!username) return;
     try {
-      let payload = { username, domain };
+      const currentDomain = company_code ? `${company_code}.ringingo.com`.toLowerCase() : domain;
+      let payload:any = { username, domain:currentDomain };
+      if (company_code) {
+        payload.company_code = company_code.toLowerCase();
+      }
       // const res = await axios.get(`https://ringingo.cc.local:5000/user/allowed_campaigns?username=${encodeURIComponent(username)}`);
       const res: any = await dispatch(userAllowedCampaign({ params: payload })).unwrap();
       console.log("resresresres", res)
@@ -371,12 +381,13 @@ const LoginForm = () => {
       const res: any = await login(
         values.username,
         values.password,
-        values.tenant_domain,
+        values.company_code ? `${values.company_code}.ringingo.com`.toLowerCase() : values.tenant_domain,
 
         //Socket browserToken
         browserToken,
         values.rememberMe,
-        campaignUUID
+        campaignUUID,
+values.company_code?.toLowerCase()
       );
 
       console.log(res);
@@ -457,6 +468,20 @@ const LoginForm = () => {
   }, []);
   
   useEffect(() => {
+    // Clear localStorage if it has data
+    if (localStorage.length > 0) {
+      localStorage.clear();
+    }
+ 
+    // Clear all cookies if any exist
+    const allCookies = Cookies.get();
+    if (Object.keys(allCookies).length > 0) {
+      Object.keys(allCookies).forEach((cookieName) => {
+        Cookies.remove(cookieName);
+      });
+    }
+  }, []);
+  useEffect(() => {
     const savedUsername = Cookies.get("username") || "";
     const rememberMe = Cookies.get("rememberMe") === "true";
 
@@ -473,35 +498,35 @@ const LoginForm = () => {
     //     backgroundImage: 'url("/assets/images/Loginbg.png")', // Replace with the actual path of your image
     //   }}
     >
-      <div className="flex items-center" >
+      <div className="flex items-stretch shadow-2xl rounded-[30px] overflow-hidden" >
         {/* Left Section (Image) */}
-        < div className="flex-1 flex items-center justify-center shadow-lg rounded-tl-lg rounded-bl-lg" >
+        <div className="w-[380px] min-h-[520px] flex items-center justify-center rounded-l-[30px] overflow-hidden" >
           <Icon
             name="LoginLogo"
             alt="Login"
-            width={400}
-            height={400}
-          // className="object-contain"
+            width={380}
+            height={520}
+            className="object-cover w-full h-full block"
           />
         </div>
 
         {/* Right Section (Login Form) */}
-        <div className="w-[400px] h-[500px] p-5 border-2 rounded-tr-[40px] rounded-br-[40px] shadow-md bg-white" >
+        <div className="w-[380px] min-h-[520px] flex flex-col p-7 bg-white space-y-3" >
           {/* Logo */}
-          < div className=" flex justify-center" >
+          < div className=" flex justify-center mb-1" >
             <Icon
               name="MenuLogoExpandedImage"
-              height={50}
-              width={220}
+              height={40}
+              width={180}
               alt="Logo"
             />
           </div>
 
-          < h2 className="text-[24px] font-medium mb-6 text-center text-[#322996]" >
+          < h2 className="text-[20px] font-medium mb-4 text-center text-[#322996]" >
             Welcome Back
           </h2>
 
-          < form onSubmit={handleSubmit} className="space-y-5" >
+          < form onSubmit={handleSubmit} className="space-y-3" >
             <div>
               {/* 
               <Input
@@ -525,6 +550,25 @@ const LoginForm = () => {
               noSpace
               />
             */}
+ <Input
+              isLogin={true}
+              icon="leadGroup"
+              className="w-full"
+              name="company_code"
+              label="Company Code"
+              value={values.company_code}
+              touched={touched}
+              errors={errors}
+              onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur(e);
+                fetchAllowedCampaigns(values.username, domain, e.target.value);
+              }}
+              isInfo={false}
+              noSpace
+            />
+            </div>
+            <div>
               < Input
                 isLogin={true}
                 icon="userLogin"
@@ -540,9 +584,9 @@ const LoginForm = () => {
                 errors={errors}
                 onChange={handleChange}
                 onBlur={(e) => {
-                  handleBlur(e); // preserve Formik's behavior
-                  fetchAllowedCampaigns(e.target.value, domain); // fetch after blur
-                }}
+                handleBlur(e);
+                fetchAllowedCampaigns(e.target.value, domain, values.company_code);
+              }}
                 isInfo={false}
                 noSpace
 
@@ -617,6 +661,7 @@ const LoginForm = () => {
               value={values.campaign_uuid}
               touched={touched}
               errors={errors}
+              isInfo={false}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 console.log("Selected campaign UUID:", e.target.value);
                 setFieldValue("campaign_uuid", e.target.value);
@@ -653,7 +698,7 @@ const LoginForm = () => {
             />
             {/* Terms & Condition */}
             <div className="text-center" >
-              <p className="text-[10px] text-gray-500  mt-4" >
+              <p className="text-[10px] text-gray-500  mt-2" >
                 By clicking to continue, you agree to our{" "}
                 <span className="font-bold text-gray-700" >
                   Terms & Condition
@@ -661,7 +706,7 @@ const LoginForm = () => {
               </p>
 
               {/* Powered by Bytebran */}
-              <p className="text-xs text-gray-600 text-center mt-4" >
+              <p className="text-xs text-gray-600 text-center mt-2" >
                 Powered by{" "}
                 <span className="text-[#322996] font-medium" > Ringingo </span>
               </p>

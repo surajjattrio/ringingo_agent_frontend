@@ -147,3 +147,6 @@ export const CHAT_HISTORY = "/agent-call-center/omnichannel/get-history";
 
 // Tenant Personalize
 export const TENANT_PERSONALIZE = "/tenant/tenantpersonalization";
+
+// WABA SSO
+export const GENERATE_WABA_SSO_TOKEN = "/tenant/sso/waba/token";

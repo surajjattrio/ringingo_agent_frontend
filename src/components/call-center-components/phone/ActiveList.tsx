@@ -4,7 +4,8 @@ import Legacy from "next/legacy/image";
 
 // PROJECT IMPORTS
 import { useAppDispatch } from "@/redux/hooks";
-import { Success } from "@/redux/services/toasterService";
+import { Success, Danger } from "@/redux/services/toasterService";
+import { getWabaSsoTokenPost } from "@/redux/services/chatService";
 import {
   clearLeadDetails,
   clearLeadUuid,
@@ -14,6 +15,7 @@ import {
   getSingleLead,
   onSkipLeadDial,
   useAllLeadDetails,
+  useIsAllLeadsLoading,
   useSingleLeadDetails,
 } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import {
@@ -49,7 +51,7 @@ import {
   useIsActiveChat,
 } from "@/redux/slice/chatSlice";
 import { format } from "date-fns";
-import { getValidTime, isWhatsAppEnabled } from "@/components/helperFunctions";
+import { getValidTime, isWhatsAppEnabled, truncateName } from "@/components/helperFunctions";
 import { useAuth } from "@/contexts/hooks/useAuth";
 
 // ASSETS
@@ -57,6 +59,7 @@ const call_ring = "/assets/icons/yellow/call-ring.svg";
 const call_outbound = "/assets/icons/call/call-outbound.svg";
 const callGreen = "/assets/icons/green/call.svg";
 const next = "/assets/icons/next-play.svg";
+const refreshIcon = "/assets/icons/refresh.svg";
 const whatsapp = "/assets/icons/green/whatsapp.svg";
 const whatsappBlue = "/assets/icons/blue/whatsapp.svg";
 const instagram = "/assets/icons/instagram.svg";
@@ -94,8 +97,22 @@ const ActiveList = ({
   console.log(allLeadsDetails, 'allLeadsDetailssssssss')
   console.log(isCallHangUp, 'isCallHangUp')
   const [data, setData] = useState<any>([]);
-  console.log(data,'data');
-  console.log(campaignMode,'campaignMode');
+  const isAllLeadsLoading = useIsAllLeadsLoading();
+
+  const onManualRefresh = () => {
+    if (selectedCampaign && !isAllLeadsLoading) {
+      dispatch(
+        getAllLeads({
+          campaign_uuid: selectedCampaign,
+          campaign_mode: campaignMode,
+        })
+      )
+        .unwrap()
+        .catch((err) => {
+          console.log("Manual Refresh Err--->", err?.message);
+        });
+    }
+  };
   
 
   /**
@@ -346,6 +363,7 @@ const ActiveList = ({
         dispatch(onSetAddNoteId(null));
         dispatch(setIsCallHangUp(false));
         dispatch(clearLeadUuid());
+        setData([]);
       }
     } catch (error: any) {
       console.log("Get lead Info Err--->", error?.message);
@@ -597,20 +615,33 @@ const ActiveList = ({
                         </div>
                       </div>
                       <div className="col-span-4 flex flex-col">
-                        <span className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading">
-                          {(val?.first_name || "") +
-                            " " +
-                            (val?.last_name || "")}
+                        <span 
+                          className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading"
+                          title={(val?.first_name || "") + " " + (val?.last_name || "")}
+                        >
+                          {truncateName(val?.first_name || "") + " " + (val?.last_name || "")}
                         </span>
                         <span className="5xl:text-[13px] 4xl:text-[12px] text-[10px] text-txt-primary">
                           Outgoing call
                         </span>
                       </div>
                       <div className="col-span-1 flex gap-2 justify-end">
-                        <a
-                          target="_blank"
+                        <div
                           className="cursor-pointer"
-                          href={`https://wa.me/${val?.phone_number}`}
+                          onClick={async () => {
+                            try {
+                              const res: any = await getWabaSsoTokenPost();
+                              // debugger
+                              const redirectUrl = res?.data?.redirect_url;
+                              if (redirectUrl) {
+                                window.open(redirectUrl, "_blank");
+                              } else {
+                                Danger("SSO redirect URL not available");
+                              }
+                            } catch (err) {
+                              Danger("Failed to generate SSO token");
+                            }
+                          }}
                         >
                           <div className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[16px] h-[16px]">
                             <Legacy
@@ -619,7 +650,7 @@ const ActiveList = ({
                               layout="fill"
                             />
                           </div>
-                        </a>
+                          </div>
                         {isCallHangUp && (
                           <div
                             className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[18px] h-[18px] cursor-pointer"
@@ -694,10 +725,11 @@ const ActiveList = ({
                         //   </span>
                         // </div>
                         <div className="col-span-2 flex">
-                          <span className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading">
-                            {(val?.first_name || "") +
-                              " " +
-                              (val?.last_name || "")}
+                          <span 
+                            className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading"
+                            title={(val?.first_name || "") + " " + (val?.last_name || "")}
+                          >
+                            {truncateName(val?.first_name || "") + " " + (val?.last_name || "")}
                           </span>
                           <span className="5xl:text-[13px] 4xl:text-[12px] text-[10px] text-txt-primary ml-2">
                             Outgoing call
@@ -719,10 +751,21 @@ const ActiveList = ({
                         ) : null}
                       </div>
                       <div className="col-span-1 flex gap-2 justify-end">
-                        <a
-                          target="_blank"
+                        <div
                           className="cursor-pointer"
-                          href={`https://wa.me/${val?.phone_number}`}
+                          onClick={async () => {
+                            try {
+                              const res: any = await getWabaSsoTokenPost();
+                              const redirectUrl = res?.data?.redirect_url;
+                              if (redirectUrl) {
+                                window.open(redirectUrl, "_blank");
+                              } else {
+                                Danger("SSO redirect URL not available");
+                              }
+                            } catch (err) {
+                              Danger("Failed to generate SSO token");
+                            }
+                          }}
                         >
                           <div className="relative 5xl:w-[24px] 5xl:h-[24px] 4xl:w-[20px] 4xl:-h-[20px] w-[16px] h-[16px]">
                             <Legacy
@@ -731,7 +774,7 @@ const ActiveList = ({
                               layout="fill"
                             />
                           </div>
-                        </a>
+                        </div>
                         <div
                           className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[18px] h-[18px] cursor-pointer"
                           onClick={() => {
@@ -798,7 +841,7 @@ const ActiveList = ({
                     </div>
                     <div className="col-span-4 flex flex-col">
                       <span className="5xl:text-[15px] 4xl:text-[13px] text-xs font-semibold text-heading">
-                        {val.caller_id_name}
+                        {truncateName(val.caller_id_name, 12)}
                       </span>
                       <span className="5xl:text-[13px] 4xl:text-[12px] text-[10px] text-txt-primary">
                         Queue Call
@@ -840,6 +883,20 @@ const ActiveList = ({
           <span className="3xl:text-base text-xs text-heading font-bold ">
             Active
           </span>
+          <div
+            className={`relative h-[14px] w-[14px] 3xl:w-[16px] 3xl:h-[16px] mr-2 ${
+              isAllLeadsLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+            }`}
+            onClick={onManualRefresh}
+            title={isAllLeadsLoading ? "Loading..." : "Refresh Lead"}
+          >
+            <Legacy
+              src={refreshIcon}
+              alt="refresh"
+              layout="fill"
+              className={isAllLeadsLoading ? "animate-spin" : ""}
+            />
+          </div>
           {/* {((selectedCampaign && campaignType === "blended") ||
             chatModeType === "pbx") &&
             isWhatsAppEnabled(user) ? (
@@ -863,7 +920,7 @@ const ActiveList = ({
             </>
           ) : null} */}
         </div>
-        {!data?.length && !callQueueList?.length ? (
+        {(!data?.length && !callQueueList?.length || Array.isArray(allLeadsDetails) && allLeadsDetails.length === 0 ) ? (
           <>{renderDataNotFound()}</>
         ) : (
           <>{renderActiveList()}</>

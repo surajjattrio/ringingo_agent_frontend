@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import Cookies from "js-cookie";
 
 // PROJECT IMPORTS
 import { useAppSelector } from "../hooks";
@@ -52,13 +53,13 @@ const initialState: InitialState = {
   addNoteId: null,
   addLeadNoteId: null,
   selectedCampaign: "",
-  campaignMode: "",
+  campaignMode: Cookies.get("campaignMode") || "",
   dialType: "manualDial",
   leadInfo: true,
   isNumberMask: false,
   numberMasking: false,
   maskingNumber: false,
-  campaignType: "",
+  campaignType: Cookies.get("campaignType") || "",
   userEntry: "",
   isShowCallModal: "false",
   isShowCallInfoId: null,

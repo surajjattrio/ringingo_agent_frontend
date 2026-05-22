@@ -39,6 +39,7 @@ import {
   useSelectedCampaign,
   useSelectedCampaignDetails,
   useShowCallModal,
+  useUserEntry,
 } from "@/redux/slice/commonSlice";
 import {
   getCallStatistic,
@@ -257,6 +258,7 @@ const CallingModal = (props: CallingModelProps) => {
   const isCallHangUp = useIsCallHangUp();
   const callerNumber = useCallerNumber();
   const callerName = useCallerName();
+  const userEntry = useUserEntry();
 
   //  ---------------------------------------------------------
   // ✅ put near top of CallingModal()
@@ -360,15 +362,17 @@ const CallingModal = (props: CallingModelProps) => {
 
 
   useEffect(() => {
-    if (user?.isPbx) {
-      userAgentRegistration();
-    } else {
-      if (!isInboundCampaign) {
+    if (userEntry === "login-entry") {
+      if (user?.isPbx) {
         userAgentRegistration();
+      } else {
+        if (!isInboundCampaign) {
+          userAgentRegistration();
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInboundCampaign, campaignType]);
+  }, [isInboundCampaign, campaignType, userEntry]);
 
   useEffect(() => {
     // !user?.isPbx &&
@@ -2156,8 +2160,20 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
       transportOptions: {
         server: WSS_URL,
         traceSip: true,
+        keepAliveInterval: 30, // Send ping every 30 seconds to keep connection alive
+        keepAliveDebounce: 10,
       },
-      delegate: { onInvite },
+      delegate: {
+        onInvite,
+        onConnect: () => {
+          console.log("✅ SIP Transport connected/reconnected");
+          dispatch(setWebRtcStatus('CONNECTED'));
+        },
+        onDisconnect: (error: any) => {
+          console.log("❌ SIP Transport disconnected:", error);
+          dispatch(setWebRtcStatus('DISCONNECTED'));
+        }
+      },
       register: true,
       noAnswerTimeout: 60,
       userAgentString: "ASTPP | WEBRTC ",
