@@ -448,6 +448,7 @@ export const {
   clearSingleLeadDetails,
   clearSingleChatLeadDetails,
   clearCustomCallId,
+  setCustomCallId,
   setAllLeadsLoading,
   setPollingSessionId,
 } = callCenterPhoneSlice.actions;
