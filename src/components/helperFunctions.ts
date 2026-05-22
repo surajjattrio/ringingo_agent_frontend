@@ -104,12 +104,12 @@ export const getMessageFromNumber = (message: any) => {
 }
 
 export const isWhatsAppEnabled = (user: any) => {
-  return user?.permission?.whatsapp === "0"||user?.permission?.instagram === "0"|| user?.permission?.facebook === "0";
+  return user?.permission?.whatsapp === "0" || user?.permission?.instagram === "0" || user?.permission?.facebook === "0";
 }
 
 export const getValidTime = (date: string) => {
   const isDateValid = isValid(new Date(date));
-  if(isDateValid){
+  if (isDateValid) {
     return new Date(date);
   }
   return new Date();
