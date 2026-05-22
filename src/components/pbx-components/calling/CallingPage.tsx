@@ -445,80 +445,80 @@ const CallingPage = (props: CallingPageProps) => {
     <>
       <div className="flex flex-col justify-between select-none h-full">
         <div className="py-3">
-      <div className="flex flex-col justify-between select-none h-full">
-        <div className="py-3">
           <div className="flex items-center">
             <div className="flex items-center w-full justify-between px-4">
               <div className="flex justify-between">
-              <div className="3xl:h-14 3xl:w-14 h-12 w-12 rounded-full flex items-center justify-center">
-                <span className="3xl:text-base text-sm text-heading font-bold bg-[#E5E7EB] rounded-full h-8 w-8 flex items-center justify-center">
-                  {callerName
-                    ? callerName.slice(0, 1).toUpperCase()
-                    : callerNumber.slice(0, 1).toUpperCase()}
-                </span>
-              </div>
-              
-
-              <div className="flex flex-col items-center">
-                <span className="3xl:text-xs text-[11px] text-green-500">
-                  {callType}
-                </span>
-                {callerName ? (
-                  <span 
-                    className="3xl:text-sm text-xs text-heading font-bold "
-                    title={callerName}
-                  >
-                    {truncateName(callerName.split(" ")[0]) + (callerName.split(" ").length > 1 ? " " + callerName.split(" ").slice(1).join(" ") : "")}
+                <div className="3xl:h-14 3xl:w-14 h-12 w-12 rounded-full flex items-center justify-center">
+                  <span className="3xl:text-base text-sm text-heading font-bold bg-[#E5E7EB] rounded-full h-8 w-8 flex items-center justify-center">
+                    {callerName
+                      ? callerName.slice(0, 1).toUpperCase()
+                      : callerNumber.slice(0, 1).toUpperCase()}
                   </span>
-                ) : null}
-                <span
-                  className={`text-heading flex ${
-                    callerName
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <span className="3xl:text-xs text-[11px] text-green-500">
+                    {callType}
+                  </span>
+
+                  {callerName ? (
+                    <span
+                      className="3xl:text-sm text-xs text-heading font-bold"
+                      title={callerName}
+                    >
+                      {truncateName(callerName.split(" ")[0]) +
+                        (callerName.split(" ").length > 1
+                          ? " " + callerName.split(" ").slice(1).join(" ")
+                          : "")}
+                    </span>
+                  ) : null}
+
+                  <span
+                    className={`text-heading flex ${callerName
                       ? "3xl:text-xs text-[11px] font-medium"
                       : "3xl:text-sm text-xs font-bold"
-                  }`}
-                >
- {callerNumber && (
-                    <Icon
-                      name="Copy"
-                      className="cursor-pointer"
-                      width={16}
-                      height={16}
-                      onClick={() => {
-                        navigator.clipboard.writeText(callerNumber);
-                        Success("Copied to clipboard");
-                      }}
-                    />
+                      }`}
+                  >
+                    {callerNumber && (
+                      <Icon
+                        name="Copy"
+                        className="cursor-pointer"
+                        width={16}
+                        height={16}
+                        onClick={() => {
+                          navigator.clipboard.writeText(callerNumber);
+                          Success("Copied to clipboard");
+                        }}
+                      />
+                    )}
 
-                  )}
-                  {callerNumber}
-
-                </span>
-              </div>
-              </div>
-
-
-
-               <div className="flex flex-col items-center">
-              {isShowCallDuration && (
-                <>
-                  <span className="3xl:text-xs text-[11px] text-gray-400">
-                    Established
+                    {callerNumber}
                   </span>
-                  <span className="3xl:text-sm text-xs text-heading font-bold">
-                    {minutes < 10 ? `0${minutes}` : minutes} :{" "}
-                    {seconds < 10 ? `0${seconds}` : seconds}
-                  </span>
-                </>
-              )}
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                {isShowCallDuration && (
+                  <>
+                    <span className="3xl:text-xs text-[11px] text-gray-400">
+                      Established
+                    </span>
+
+                    <span className="3xl:text-sm text-xs text-heading font-bold">
+                      {minutes < 10 ? `0${minutes}` : minutes} :{" "}
+                      {seconds < 10 ? `0${seconds}` : seconds}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
+
         {rendarPage()}
       </div>
     </>
   );
-};
+}
 
 export default CallingPage;
