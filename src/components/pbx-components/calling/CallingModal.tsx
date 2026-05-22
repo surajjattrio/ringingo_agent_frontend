@@ -2157,8 +2157,20 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
       transportOptions: {
         server: WSS_URL,
         traceSip: true,
+        keepAliveInterval: 30, // Send ping every 30 seconds to keep connection alive
+        keepAliveDebounce: 10,
       },
-      delegate: { onInvite },
+      delegate: {
+        onInvite,
+        onConnect: () => {
+          console.log("✅ SIP Transport connected/reconnected");
+          dispatch(setWebRtcStatus('CONNECTED'));
+        },
+        onDisconnect: (error: any) => {
+          console.log("❌ SIP Transport disconnected:", error);
+          dispatch(setWebRtcStatus('DISCONNECTED'));
+        }
+      },
       register: true,
       noAnswerTimeout: 60,
       userAgentString: "ASTPP | WEBRTC ",
