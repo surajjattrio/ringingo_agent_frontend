@@ -11,6 +11,7 @@ import {
   onSelectCampaignDetails,
   useIsShowCallDuration,
   useCallScreen,
+  useIsCallHangUp,
 } from "@/redux/slice/commonSlice";
 import CallingModal from "@/components/pbx-components/calling/CallingModal";
 import Header from "./Header";
@@ -28,7 +29,8 @@ import { goInBreak } from "@/redux/slice/breakSlice";
 import { getTimerString } from "@/redux/services/breakService";
 import { userAgentUnRegistration } from "../../pbx-components/calling/CallingModal";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
-import { updateLiveAgentEntry } from "@/redux/slice/campaignSlice";
+import { updateLiveAgentEntry, useCallResume } from "@/redux/slice/campaignSlice";
+import { Danger, Warning } from "@/redux/services/toasterService";
 
 import getDomain from "@/utils/GetDoamin";
 
@@ -75,6 +77,8 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const campaignMode = useCampaignMode();
   const campaignType = useCampaignType();
+  const isCallResume = useCallResume();
+  const isCallHangUp = useIsCallHangUp();
 
   // FOR BREAK MODAL
   const [breakValue, setBreakValue] = useState<any>();
@@ -87,6 +91,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [breakStatus, setBreakStatus] = useState<boolean>(false);
 
   const [isOpenConfirmBreak, setIsOpenConfirmBreak] = useState<boolean>(false);
+  const hasRestoredBreakRef = useRef(false);
 
   const [showCampaignUpdatedModal, setShowCampaignUpdatedModal] = useState<boolean>(false);
   const isShowCallDuration = useIsShowCallDuration();
@@ -175,7 +180,7 @@ useEffect(() => {
       if (event.type === "BREAK") {
         const eve = { value: event?.payload?.uuid, option: event?.payload };
         setBreakStatus(true)
-        onBreakSelection(eve);
+        onBreakSelection(eve, true);
       } else if (event.type === "OFF_BREAK") {
         onBackToWork();
         setBreakStatus(false)
@@ -264,9 +269,10 @@ useEffect(() => {
 
   const onUpdateLiveAgentEntry = async (status: string) => {
     try {
+      let activeCampaign = selectedCampaign || user?.agent_detail?.campaign_uuid || false;
       let payload = {
         status: status,
-        campaign_uuid: selectedCampaign ? selectedCampaign : false,
+        campaign_uuid: activeCampaign,
         type: "hangup",
       };
       await dispatch(updateLiveAgentEntry(payload)).unwrap();
@@ -389,8 +395,14 @@ useEffect(() => {
     console.log("Socket reconnected after break");
   };
 
-  const onBreakSelection = async (e: any) => {
+  const onBreakSelection = async (e: any, isFromSocket: boolean = false) => {
     console.log("On Break");
+
+    if (selectedCampaign && (!isCallResume || isCallHangUp) && !isFromSocket) {
+      Warning("Pause the campaign or finish your call before going on break.");
+      return;
+    }
+
     userAgentUnRegistration();
     setBreakValue(e.option);
     onStartBreak(e.option);
@@ -412,7 +424,9 @@ useEffect(() => {
 
   useEffect(() => {
     const savedBreak = Cookies.get("break_data");
-    if (savedBreak && user) {
+    console.log("DEBUG: MainLayout break useEffect triggered. savedBreak =", savedBreak, "user =", user);
+    if (savedBreak && user?.agent_detail?.campaign_uuid && !hasRestoredBreakRef.current) {
+      hasRestoredBreakRef.current = true;
       try {
         const breakData = JSON.parse(savedBreak);
         const endDate = new Date(breakData.endDate);
@@ -581,4 +595,3 @@ useEffect(() => {
 };
 
 export default MainLayout;
-

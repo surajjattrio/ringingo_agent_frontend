@@ -71,7 +71,7 @@ const LoginForm = () => {
 
       const res: any = await apiInstance.post(
         LOGIN_PAGE_LOGOUT,
-        { username: values?.username, domain: currentDomain}
+        { username: values?.username, domain: currentDomain }
       );
       if (res && res?.statusCode === 200) {
         dispatch({
@@ -90,22 +90,22 @@ const LoginForm = () => {
       Danger(error?.response?.data?.message);
     }
   };
-  const forceLogin = async (data:any) => {
+  const forceLogin = async (data: any) => {
     setIsLoading(true)
-          const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase()  : domain;
+    const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase() : domain;
 
     try {
       const res: any = await apiInstance.post(
         FORCE_LOGIN,
-        { username: values?.username, domain: currentDomain}
+        { username: values?.username, domain: currentDomain }
       );
       if (res && res?.statusCode === 200) {
-      if(res?.message?.force_login==="0"){
-        setShowForceLogout(true)
-      }else{
-        Danger(data)
-      }   
-      setIsLoading(false)
+        if (res?.message?.force_login === "0") {
+          setShowForceLogout(true)
+        } else {
+          Danger(data)
+        }
+        setIsLoading(false)
       }
     } catch (error: any) {
       Danger(error?.response?.data?.message);
@@ -186,7 +186,7 @@ const LoginForm = () => {
     username: "",
     password: "",
     tenant_domain: tenantPortal, // ::yaksh::
-company_code: "",
+    company_code: "",
     browserToken: "",
     campaign_uuid: "", // <- new
     rememberMe: false,
@@ -196,7 +196,7 @@ company_code: "",
     username: Yup.string().required("Please enter your username"),
     password: Yup.string().required("Please enter your password"),
     campaign_uuid: Yup.string().required("Please select a campaign"),
-company_code: Yup.string().optional(),
+    company_code: Yup.string().optional(),
   });
 
   // CALL REGISTRATION
@@ -292,7 +292,7 @@ company_code: Yup.string().optional(),
     if (!username) return;
     try {
       const currentDomain = company_code ? `${company_code}.ringingo.com`.toLowerCase() : domain;
-      let payload:any = { username, domain:currentDomain };
+      let payload: any = { username, domain: currentDomain };
       if (company_code) {
         payload.company_code = company_code.toLowerCase();
       }
@@ -387,7 +387,7 @@ company_code: Yup.string().optional(),
         browserToken,
         values.rememberMe,
         campaignUUID,
-values.company_code?.toLowerCase()
+        values.company_code?.toLowerCase()
       );
 
       console.log(res);
@@ -451,13 +451,13 @@ values.company_code?.toLowerCase()
     validationSchema,
     onSubmit,
   });
-  
+
   useEffect(() => {
     // Clear localStorage if it has data
     if (localStorage.length > 0) {
       localStorage.clear();
     }
- 
+
     // Clear all cookies if any exist
     const allCookies = Cookies.get();
     if (Object.keys(allCookies).length > 0) {
@@ -466,21 +466,7 @@ values.company_code?.toLowerCase()
       });
     }
   }, []);
-  
-  useEffect(() => {
-    // Clear localStorage if it has data
-    if (localStorage.length > 0) {
-      localStorage.clear();
-    }
- 
-    // Clear all cookies if any exist
-    const allCookies = Cookies.get();
-    if (Object.keys(allCookies).length > 0) {
-      Object.keys(allCookies).forEach((cookieName) => {
-        Cookies.remove(cookieName);
-      });
-    }
-  }, []);
+
   useEffect(() => {
     const savedUsername = Cookies.get("username") || "";
     const rememberMe = Cookies.get("rememberMe") === "true";
@@ -550,23 +536,23 @@ values.company_code?.toLowerCase()
               noSpace
               />
             */}
- <Input
-              isLogin={true}
-              icon="leadGroup"
-              className="w-full"
-              name="company_code"
-              label="Company Code"
-              value={values.company_code}
-              touched={touched}
-              errors={errors}
-              onChange={handleChange}
-              onBlur={(e) => {
-                handleBlur(e);
-                fetchAllowedCampaigns(values.username, domain, e.target.value);
-              }}
-              isInfo={false}
-              noSpace
-            />
+              <Input
+                isLogin={true}
+                icon="leadGroup"
+                className="w-full"
+                name="company_code"
+                label="Company Code"
+                value={values.company_code}
+                touched={touched}
+                errors={errors}
+                onChange={handleChange}
+                onBlur={(e) => {
+                  handleBlur(e);
+                  fetchAllowedCampaigns(values.username, domain, e.target.value);
+                }}
+                isInfo={false}
+                noSpace
+              />
             </div>
             <div>
               < Input
@@ -584,9 +570,9 @@ values.company_code?.toLowerCase()
                 errors={errors}
                 onChange={handleChange}
                 onBlur={(e) => {
-                handleBlur(e);
-                fetchAllowedCampaigns(e.target.value, domain, values.company_code);
-              }}
+                  handleBlur(e);
+                  fetchAllowedCampaigns(e.target.value, domain, values.company_code);
+                }}
                 isInfo={false}
                 noSpace
 
@@ -722,7 +708,7 @@ values.company_code?.toLowerCase()
             </h3>
 
             <p className="text-sm text-gray-600 mt-2">
-                {errorMsg || "You are already logged in on another device. Would you like to force logout?"}
+              {errorMsg || "You are already logged in on another device. Would you like to force logout?"}
 
             </p>
 
