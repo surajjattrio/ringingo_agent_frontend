@@ -398,7 +398,7 @@ useEffect(() => {
   const onBreakSelection = async (e: any, isFromSocket: boolean = false) => {
     console.log("On Break");
 
-    if (selectedCampaign && (!isCallResume || isCallHangUp) && !isFromSocket) {
+    if ((isCallActive || (selectedCampaign && (!isCallResume || isCallHangUp))) && !isFromSocket) {
       Warning("Pause the campaign or finish your call before going on break.");
       return;
     }
