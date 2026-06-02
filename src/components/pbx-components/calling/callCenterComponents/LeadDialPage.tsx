@@ -26,6 +26,7 @@ import {
 // THIRD-PARTY IMPORT
 import Cookies from "js-cookie";
 import { userAgentUnRegistration } from "../CallingModal";
+import { agentEntryAdd } from "@/redux/slice/authSlice";
 
 // ASSETS
 const play_circle = "/assets/icons/red/play-circle.svg";
@@ -92,6 +93,7 @@ const LeadDialPage = (props: LeadDialPageProps) => {
                 console.log("iscall is call resumeeee", isCallResume)
                 dispatch(setCallResume(false));
                 onUpdateLiveAgentEntry("0");
+                dispatch(agentEntryAdd({ login_status: "3" }));
                 const call_status = Cookies.get("call_status");
                 //if(call_status == "pause"){
                 Cookies.set("call_status", "play");
@@ -143,6 +145,7 @@ const LeadDialPage = (props: LeadDialPageProps) => {
                 delete payload["username"];
                 dispatch(setCallResume(true));
                 onUpdateLiveAgentEntry("4");
+                dispatch(agentEntryAdd({ login_status: "4" }));
                 if (campaignType === "inbound"||campaignType==="blended") {
                     onCallQueueInbound("hang-up", true);
                     if (campaignType === "inbound") {
