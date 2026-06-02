@@ -66,6 +66,7 @@ import AddNotePage from "./AddNotePage";
 import ActiveCallModal from "./ActiveCallModal";
 import CallingPage from "./CallingPage";
 import DailPage from "./DailPage";
+import { agentEntryAdd } from "@/redux/slice/authSlice";
 
 // THIRD-PARTY IMPORT
 
@@ -306,6 +307,19 @@ const CallingModal = (props: CallingModelProps) => {
     a.currentTime = 0;
   };
 
+  const prevIsCallHangUpRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (prevIsCallHangUpRef.current !== null && prevIsCallHangUpRef.current !== isCallHangUp) {
+      if (isCallHangUp) {
+        dispatch(agentEntryAdd({ login_status: "5" }));
+      } else {
+        dispatch(agentEntryAdd({ login_status: "6" }));
+      }
+    }
+    prevIsCallHangUpRef.current = isCallHangUp;
+  }, [isCallHangUp, dispatch]);
+  
   useEffect(() => {
     callerTuneRef.current = new Audio(CallerTuneFile);
     callerTuneRef.current.preload = "auto";
