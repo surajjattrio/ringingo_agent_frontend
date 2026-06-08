@@ -160,6 +160,18 @@ useEffect(() => {
   };
 }, [user]);
 
+  const prevIsCallHangUpRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (prevIsCallHangUpRef.current !== null && prevIsCallHangUpRef.current !== isCallHangUp) {
+      if (isCallHangUp) {
+        dispatch(agentEntryAdd({ login_status: "5" }));
+      } else {
+        dispatch(agentEntryAdd({ login_status: "6" }));
+      }
+    }
+    prevIsCallHangUpRef.current = isCallHangUp;
+  }, [isCallHangUp, dispatch]);
 
   // const agentUpdateTime = (browserToken: string, agent_uuid: string) => {
   //   console.log(socketRef.current, "socket");
