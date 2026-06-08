@@ -173,11 +173,14 @@ const CreateLead = (props: CreateLeadProps) => {
         if (res) {
           console.log(res,'ress');     
           Success(res?.data);
-          (fromCallCenter && (campaignMode === "1" || campaignMode === "3")) ||
-            activeConversation?.user_uuid
-            ? editData?.lead_management_uuid &&
-            onGetLeadInfo(editData.lead_management_uuid)
-            : dispatch(changeLeadDetails(data));
+          if (fromCallCenter || activeConversation?.user_uuid) {
+            if (editData?.lead_management_uuid) {
+              onGetLeadInfo(editData.lead_management_uuid);
+            }
+            dispatch(changeLeadDetails(data));
+          } else {
+            dispatch(changeLeadDetails(data));
+          }
           onGetAllLeadList();
           fromList && onGetLeadList();
           setIsCreateLead(false);

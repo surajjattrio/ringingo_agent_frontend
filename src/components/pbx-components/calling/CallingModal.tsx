@@ -51,6 +51,7 @@ import {
   dialManual,
   getSingleLead,
   reportAdd,
+  setCustomCallId,
 } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import {
   callQueueInbound,
@@ -110,6 +111,10 @@ let registrationStateListenerAttached = false;
 // USER UNREGISTRATION
 export const userAgentUnRegistration = () => {
   console.log("ON LOG OUT CLICK....>");
+  if (!userAgent) {
+    console.log("No userAgent initialized, skipping unregister.");
+    return;
+  }
   const registerer = new Registerer(userAgent);
   console.log(registerer);
   if (
@@ -360,6 +365,39 @@ const CallingModal = (props: CallingModelProps) => {
   }, [callScreen, campaignMode]);
 
   useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (callScreen === "LIVE") {
+        const message = "You cannot refresh the page while an active call is in progress.";
+
+        e.preventDefault();
+        e.returnValue = message;
+
+        return message;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (callScreen === "LIVE") {
+        const isRefreshKey = e.key === "F5" || ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"));
+
+        if (isRefreshKey) {
+          e.preventDefault();
+
+          alert("Refresh is disabled during an active call. Please end the call before refreshing the page.");
+        }
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [callScreen]);
+
+  useEffect(() => {
     return () => clearInterval(durationInterval); // Cleanup interval on component unmount
   }, []);
 
@@ -588,8 +626,6 @@ const CallingModal = (props: CallingModelProps) => {
   // GET LEAD INFORMATUON
   const onGetLeadInfo = async (lead_uuid: string) => {
     try {
-      console.log("chlaa");
-      
       await dispatch(getSingleLead(lead_uuid)).unwrap();
     } catch (error: any) {
       console.log("Get lead Info Err--->", error?.message);
@@ -1687,12 +1723,12 @@ const CallingModal = (props: CallingModelProps) => {
     dispatch(setCallerNumber(CallerNumber));
     const autoAnswerValue = autoAnswerRef.current;
 
-console.log("✅ autoAnswerValue (ref) =", autoAnswerValue);
-  console.log(autoAnswer ,"auto answer value in invite");
-  console.log(Cookies.get("isReceivedDirect") ,"auto isReceivedDirect value in invite");
-  
-if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
-   console.log("isReceivedDirect");
+    console.log("✅ autoAnswerValue (ref) =", autoAnswerValue);
+    console.log(autoAnswer, "auto answer value in invite");
+    console.log(Cookies.get("isReceivedDirect"), "auto isReceivedDirect value in invite");
+
+    if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
+      console.log("isReceivedDirect");
       console.log("---------TEST------------lead_uuid", lead_uuid);
       if (Cookies.get("isCallResume") === "0" && auto) {
         console.log("in hangup ------------------>");
@@ -1700,6 +1736,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
       } else {
         receiveCall();
         Cookies.set("callId", callerId);
+        dispatch(setCustomCallId(callerId));
         dispatch(onSetAddNoteId(callerId));
       }
       setCallType("Outgoing Call To");
@@ -1797,6 +1834,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
           setupRemoteMedia(invitation); //	Media audio control
           callDuration(true); //	Call duration
           Cookies.set("callId", callerId);
+          dispatch(setCustomCallId(callerId));
           dispatch(onSetAddNoteId(callerId));
           setAddNoteShowCallDuration(true);
           callKeypadSiderProperties("callEstablished", "Established"); //	On answer manage keypadsider states
@@ -1928,7 +1966,6 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
           if (!!Cookies.get("callId")) {
             dispatch(setIsCallHangUp(true));
             console.log('isCallHangUp from trye');
-            
             setShowModal(false);
             if (
               campaignType === "inbound" ||
@@ -2461,6 +2498,7 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
                 }
                 console.log("id-------->", id);
                 Cookies.set("callId", id);
+                dispatch(setCustomCallId(id));
                 dispatch(onSetAddNoteId(id));
 
                 // callerTuneplay.play(); //	Caller tune play
@@ -5973,11 +6011,11 @@ if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
 
             {/* Screen Content */}
             <div
-             className={`${callScreen === "LIVE"? "mt-0"
-                  : "mt-4"
+              className={`${callScreen === "LIVE" ? "mt-0"
+                : "mt-4"
                 }`}
             //  className="px-4 mt-4 "
-             >{renderScreen()}</div>
+            >{renderScreen()}</div>
 
             {/* Close Button Area (if needed in future) */}
             <div

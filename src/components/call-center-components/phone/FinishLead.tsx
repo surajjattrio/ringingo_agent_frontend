@@ -513,6 +513,10 @@ const FinishLead = (props: FinishLeadProps) => {
             uuid: user?.agent_detail?.uuid,
             timezone: user?.timezone || "Asia/Kolkata"
           }));
+          dispatch(getAgentTodayStats({
+            uuid: user?.agent_detail?.uuid,
+            timezone: user?.timezone || "Asia/Kolkata"
+          }));
         }
       } else {
         console.log("OUTGOING CALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
@@ -602,6 +606,14 @@ const FinishLead = (props: FinishLeadProps) => {
           dispatch(onAddLeadNoteId(null));
           setIsHangUp(false);
           dispatch(clearCustomCallId());
+          dispatch(getAgentTodayStats({
+            uuid: user?.agent_detail?.uuid,
+            timezone: user?.timezone || "Asia/Kolkata"
+          }));
+          if (campaignMode === "2") {
+            await onGetLeadInfo();
+            dispatch(onShowLeadInfo(true));
+          }
           dispatch(getAgentTodayStats({
             uuid: user?.agent_detail?.uuid,
             timezone: user?.timezone || "Asia/Kolkata"

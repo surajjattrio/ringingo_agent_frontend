@@ -27,6 +27,7 @@ import { agentEntryAdd } from "@/redux/slice/authSlice";
 // THIRD-PARTY IMPORT
 import Cookies from "js-cookie";
 import { userAgentUnRegistration } from "../CallingModal";
+import { agentEntryAdd } from "@/redux/slice/authSlice";
 
 // ASSETS
 const play_circle = "/assets/icons/red/play-circle.svg";

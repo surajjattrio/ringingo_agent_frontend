@@ -33,6 +33,8 @@ import {
   useSelectedCampaign,
   useSelectedCampaignDetails,
   useStatus,
+  useIsShowCallDuration,
+  useCallScreen,
 } from "@/redux/slice/commonSlice";
 import { useAppDispatch } from "@/redux/hooks";
 import { CallPbxSwitch } from "@/components/forms";
@@ -59,7 +61,7 @@ import {
 import { toast } from "react-toastify";
 import { getFollowUpMessage } from "@/redux/slice/followUpSlice";
 import { clearLeadDetails } from "@/redux/slice/callCenter/callCenterPhoneSlice";
-import { Danger } from "@/redux/services/toasterService";
+import { Danger, Warning } from "@/redux/services/toasterService";
 import BreakSelection from "@/components/pbx-components/break-selection/BreakSelection";
 import { changeModle } from "@/redux/slice/chatSlice";
 import { getWrapUpTimerString } from "@/redux/services/breakService";
@@ -97,6 +99,9 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
   const isCallHangUp = useIsCallHangUp();
   const campaignType = useCampaignType();
   const campaignOptions = useCampaignOptions();
+  const isShowCallDuration = useIsShowCallDuration();
+  const callScreen = useCallScreen();
+  const isCallActive = isShowCallDuration || callScreen === "LIVE";
 
   const { logout, user, switchRole } = useAuth();
 
@@ -327,7 +332,13 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
   };
 
   // LOG OUT USER
-  const onLogoutClick = async () => {
+  const onLogoutClick = async (eventOrFromSocket?: any) => {
+    const isFromAdmin = eventOrFromSocket !== undefined;
+
+    if (!isFromAdmin && (isCallActive || isCallHangUp)) {
+      Warning("You cannot logout during an ongoing call or wrap-up.");
+      return;
+    }
     if (!isLogoutLoading) {
       setIsLogoutLoading(true);
       try {
