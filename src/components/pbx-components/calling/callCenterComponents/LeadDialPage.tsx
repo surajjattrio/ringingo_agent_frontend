@@ -22,7 +22,7 @@ import {
     usePredictiveData,
     useSelectedCampaign,
 } from "@/redux/slice/commonSlice";
-import { agentEntryAdd } from "@/redux/slice/authSlice";
+// import { agentEntryAdd } from "@/redux/slice/authSlice";
 
 // THIRD-PARTY IMPORT
 import Cookies from "js-cookie";

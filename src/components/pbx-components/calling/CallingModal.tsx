@@ -600,7 +600,7 @@ const CallingModal = (props: CallingModelProps) => {
     }
   };
 
-  const onCallQueueInbound = async () => {
+  const onCallQueueInbound = async (feature: string = "hang-up") => {
     try {
       let payload: any = {
         extension: user?.agent_detail?.extension_details[0].username,
@@ -609,7 +609,7 @@ const CallingModal = (props: CallingModelProps) => {
           : Cookies.get("selectedCampaign")
             ? Cookies.get("selectedCampaign")
             : "",
-        feature: "hang-up",
+        feature: feature,
         campaign_type:
           campaignType === "inbound"
             ? ""
@@ -661,14 +661,14 @@ const CallingModal = (props: CallingModelProps) => {
     try {
       let payload = {
         status:
-          callType === "Incoming" ? "1" : callType === "hangup" ? "5" : "2",
+          callType === "Incoming" ? "1" : callType === "hangup" ? "5" : callType === "0" ? "0" : "2",
         campaign_uuid: selectedCampaign
           ? selectedCampaign
           : Cookies.get("selectedCampaign")
             ? Cookies.get("selectedCampaign")
             : "",
         phone_number: phone_number,
-        type: callType === "hangup" ? "hangup" : callType,
+        type: callType === "hangup" || callType === "0" ? "hangup" : callType,
       };
       await dispatch(updateLiveAgentEntry(payload)).unwrap();
     } catch (error: any) {
@@ -1687,6 +1687,23 @@ const CallingModal = (props: CallingModelProps) => {
       } else {
         auto = false;
       }
+
+      const getHeaderValue = (headerName: string) => {
+        if (!headers) return undefined;
+        const key = Object.keys(headers).find(k => k.toLowerCase() === headerName.toLowerCase());
+        if (key && headers[key] && headers[key][0]) {
+          return headers[key][0].raw;
+        }
+        return undefined;
+      };
+
+      const isBarge = getHeaderValue("X-Barge") === "true";
+      const isWhisper = getHeaderValue("X-Whisper") === "true";
+      const isMonitor = getHeaderValue("X-Monitor") === "true";
+
+      if (isBarge) Cookies.set("isBargeCall", "true");
+      if (isWhisper) Cookies.set("isWhisperCall", "true");
+      if (isMonitor) Cookies.set("isMonitorCall", "true");
     }
 
     let LeadInfo: any;
@@ -1847,6 +1864,11 @@ const CallingModal = (props: CallingModelProps) => {
           Cookies.set("is_call_start", "1");
           console.log("iscall call id valueeeee", Cookies.get("callId"))
           playBeep();
+          if (checkIsBargeCall()) {
+            handleBargeTermination();
+            return;
+          }
+
           onCallQueueInbound();
           if (
             (secondCallSession && secondCallSession._state == "Established") ||
@@ -1949,6 +1971,11 @@ const CallingModal = (props: CallingModelProps) => {
         case SessionState.Terminating:
           Cookies.set("is_call_start", "1");
           console.log("Incoming terminating ....");
+          if (checkIsBargeCall()) {
+            handleBargeTermination();
+            return;
+          }
+
           onCallQueueInbound();
           setShowIncomingModal(false); // incoming call Model false
           // Cookies.remove("LeadDialName");
@@ -2028,6 +2055,11 @@ const CallingModal = (props: CallingModelProps) => {
           dispatch(onDial(null));
           setShowModal(true);
           setShowActiveModal(false);
+          if (checkIsBargeCall()) {
+            handleBargeTermination();
+            return;
+          }
+
           if (!user?.isPbx) {
             onUpdateLiveAgentEntry("hangup", Cookies.get("phone_number") || "");
           }
@@ -2305,8 +2337,48 @@ const CallingModal = (props: CallingModelProps) => {
       });
   };
 
+  // Check if current call is barge/whisper/monitor
+  const checkIsBargeCall = () => {
+    return (
+      Cookies.get("isBargeCall") === "true" ||
+      Cookies.get("isWhisperCall") === "true" ||
+      Cookies.get("isMonitorCall") === "true"
+    );
+  };
+
+  // Common handler for barge/whisper/monitor call termination
+  const handleBargeTermination = () => {
+    onCallQueueInbound("resume");
+    setShowIncomingModal(false);
+    setNumber("");
+    dispatch(onDial(null));
+    setShowModal(false);
+    setShowActiveModal(false);
+    if (!user?.isPbx) {
+      onUpdateLiveAgentEntry("0", Cookies.get("phone_number") || "");
+    }
+    dispatch(setIsCallHangUp(false));
+    dispatch(onShowCallModal("false"));
+    dispatch(setCallScreen(""));
+    setIsHold(false);
+    setIsMuted(false);
+    setPage("");
+    cleanupMedia();
+    stopTune();
+    callDuration(false);
+    onGetCallStatistic();
+    onMissedCallCountGet();
+    dispatch(setIsShowCallDuration(false));
+    callKeypadSiderProperties("callTermination", "Termination", true);
+    setTimeout(() => {
+      Cookies.remove("isBargeCall");
+      Cookies.remove("isWhisperCall");
+      Cookies.remove("isMonitorCall");
+    }, 100);
+  };
+
   //	Call keypadsider properties from statuscard component
-  const callKeypadSiderProperties = (functionName = "", argumentOne = "") => {
+  const callKeypadSiderProperties = (functionName = "", argumentOne = "", isBarge: boolean = false) => {
     if (functionName !== "") {
       let dataForLocalStorageSc = {
         functionName: functionName,
@@ -2317,6 +2389,16 @@ const CallingModal = (props: CallingModelProps) => {
 
       switch (functionName) {
         case "callTermination":
+          if (isBarge) {
+            dispatch(setIsCallHangUp(false));
+            console.log("iscall callTermination is barge call, set setIsCallHangUp = FALSE");
+            Cookies.set(
+              "statuscardToKeypadSider",
+              JSON.stringify(dataForLocalStorageSc),
+              { expires: 1 }
+            );
+            return;
+          }
           dispatch(setIsCallHangUp(true));
           console.log("iscall callTermination is call hangu up set = TRUEEEEEE")
           Cookies.set(
@@ -5003,6 +5085,11 @@ const CallingModal = (props: CallingModelProps) => {
   };
 
   const hangupChangeout = () => {
+    if (checkIsBargeCall()) {
+      handleBargeTermination();
+      return;
+    }
+
     // setLiveCall(false);
     Cookies.remove("LeadDialName");
     setNumber("");
@@ -5069,6 +5156,11 @@ const CallingModal = (props: CallingModelProps) => {
   };
 
   const hangupChange = () => {
+    if (checkIsBargeCall()) {
+      handleBargeTermination();
+      return;
+    }
+
     setShowIncomingModal(false); // incoming call Model false
     Cookies.remove("LeadDialName");
     setNumber("");
