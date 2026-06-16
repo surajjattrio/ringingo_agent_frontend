@@ -541,7 +541,7 @@ export default function Phone() {
                             <div className="absolute right-0 top-full mt-1 z-[100] bg-white shadow-2xl rounded-lg border border-gray-100 min-w-[150px] py-1 animate-in fade-in zoom-in duration-150">
                               <div className="max-h-[250px] overflow-y-auto">
                                 {apiTemplates.length > 0 ? (
-                                  apiTemplates.map((t) => (
+                                  apiTemplates.map((t: any) => (
                                     <div
                                       key={t.id}
                                       className="px-4 py-2 text-[11px] hover:bg-gray-50 cursor-pointer text-gray-700 font-bold border-b last:border-0 border-gray-50"
@@ -585,7 +585,7 @@ export default function Phone() {
                                     Loading templates...
                                   </div>
                                 ) : Array.isArray(allowedTemplates) && allowedTemplates.length > 0 ? (
-                                  allowedTemplates.map((t) => (
+                                  allowedTemplates.map((t: any) => (
                                     <div
                                       key={t.uuid}
                                       className="px-4 py-2 text-[11px] hover:bg-gray-50 cursor-pointer text-gray-700 font-medium border-b last:border-0 border-gray-50"
