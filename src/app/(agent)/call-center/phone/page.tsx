@@ -16,7 +16,7 @@ import { Button } from "@/components/forms";
 import { SocketProvider } from "@/contexts/chatSocket/SocketProvider";
 import { useAuth } from "@/contexts/hooks/useAuth";
 import { isWhatsAppEnabled } from "@/components/helperFunctions";
-import { getCampaign, getCampaignList, getCampaignOption, updateAgentCampaign } from "@/redux/slice/campaignSlice";
+import { getCampaign, getCampaignList, getCampaignOption, updateAgentCampaign, useCampaignOptions } from "@/redux/slice/campaignSlice";
 import ActiveList from "@/components/call-center-components/phone/ActiveList";
 import { getAllLeads, useAllLeadDetails, useSingleLeadDetails } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import { LoginAgentCampaignKey, setLoginAgentCampaign } from "@/utils/Storage";
@@ -89,6 +89,7 @@ export default function Phone() {
   const allowedTemplates = useAllowedTemplates();
   const activeApiConfig = useActiveApiConfig();
   const isEmailLoading = useEmailIsLoading();
+  const campaignOptions=useCampaignOptions();
 
   const apiTemplates = useMemo(() => {
     if (activeApiConfig?.templateId) {
