@@ -148,5 +148,11 @@ export const CHAT_HISTORY = "/agent-call-center/omnichannel/get-history";
 // Tenant Personalize
 export const TENANT_PERSONALIZE = "/tenant/tenantpersonalization";
 
+// MAIL CONFIGURATION
+export const MAIL_CONFIGURATION = "/mail-configuration";
+export const ALLOWED_TEMPLATES = "/mail-configuration/allowed-templates";
+export const SEND_EMAIL = "/mail-configuration/send-email";
+export const SEND_API_EMAIL = "/api-configuration/send-email";
+export const SEND_MESSAGE_CONFIG = "/message-configuration/send-message";
 // WABA SSO
 export const GENERATE_WABA_SSO_TOKEN = "/tenant/sso/waba/token";

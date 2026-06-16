@@ -227,6 +227,10 @@ const campaignSlice = createSlice({
                             auto_answer: val?.auto_answer || "1",
                             agent_script: val?.agent_script || "1",
                             agent_script_text: val?.agent_script_text || "",
+                            email_config_uuid: val?.email_config_uuid || "",
+                            api_config_uuid: val?.api_config_uuid || "",
+                            email_type: val?.email_type || "none",
+                            message_config_uuid: val?.message_config_uuid || "",
                             campaign:
                                 val?.campaign_type === "0"
                                     ? "outbound"

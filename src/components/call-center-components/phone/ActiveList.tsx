@@ -5,7 +5,7 @@ import Legacy from "next/legacy/image";
 // PROJECT IMPORTS
 import { useAppDispatch } from "@/redux/hooks";
 import { Success, Danger } from "@/redux/services/toasterService";
-import { getWabaSsoTokenPost } from "@/redux/services/chatService";
+import { getWabaSsoTokenPost,sendMessageConfigPost } from "@/redux/services/chatService";
 import {
   clearLeadDetails,
   clearLeadUuid,
@@ -30,6 +30,7 @@ import {
   useIsCallHangUp,
   useLeadInfo,
   useSelectedCampaign,
+  useSelectedCampaignDetails
 } from "@/redux/slice/commonSlice";
 
 // THIRD-PARTY IMPORT
@@ -53,7 +54,7 @@ import {
 import { format } from "date-fns";
 import { getValidTime, isWhatsAppEnabled, truncateName } from "@/components/helperFunctions";
 import { useAuth } from "@/contexts/hooks/useAuth";
-
+import { ConfirmationModal } from "@/components/modals";
 // ASSETS
 const call_ring = "/assets/icons/yellow/call-ring.svg";
 const call_outbound = "/assets/icons/call/call-outbound.svg";
@@ -69,6 +70,7 @@ interface ActiveListProps {
   setActiveId: Function;
   sectionClass: string;
   sectionBodyClass: string;
+  headerAction?: React.ReactNode;
 }
 
 /* ============================== ACTIVE LIST BOX ============================== */
@@ -77,6 +79,7 @@ const ActiveList = ({
   setActiveId,
   sectionClass,
   sectionBodyClass,
+  headerAction,
 }: ActiveListProps) => {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
@@ -98,6 +101,51 @@ const ActiveList = ({
   console.log(isCallHangUp, 'isCallHangUp')
   const [data, setData] = useState<any>([]);
   const isAllLeadsLoading = useIsAllLeadsLoading();
+  const selectedCampaignDetails = useSelectedCampaignDetails();
+  
+  const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
+  const [selectedWhatsappLead, setSelectedWhatsappLead] = useState<any>(null);
+  const [whatsappTargetNumber, setWhatsappTargetNumber] = useState<string>("");
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+
+  const handleWhatsAppConfirm = async () => {
+    if (!selectedWhatsappLead || !whatsappTargetNumber) {
+      Danger("Please provide a valid phone number.");
+      return;
+    }
+    setWhatsappLoading(true);
+    try {
+      if (selectedCampaignDetails?.message_config_uuid) {
+        const payload = {
+          config_uuid: selectedCampaignDetails.message_config_uuid,
+          to: whatsappTargetNumber,
+          lead_data: selectedWhatsappLead
+        };
+        const response: any = await sendMessageConfigPost(payload);
+        if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201 || response?.statusCode === 200 || response?.status === 200) {
+          Success(response?.data?.message || response?.message || "Message sent successfully!");
+        } else {
+          Danger(response?.data?.message || response?.message || "Failed to send message");
+        }
+      } else {
+        const res: any = await getWabaSsoTokenPost();
+        const redirectUrl = res?.data?.redirect_url;
+        if (redirectUrl) {
+          window.open(redirectUrl, "_blank");
+        } else {
+          Danger("SSO redirect URL not available");
+        }
+      }
+    } catch (err) {
+      Danger("Failed to generate SSO token");
+    } finally {
+      setWhatsappLoading(false);
+      setWhatsappModalVisible(false);
+      setSelectedWhatsappLead(null);
+    }
+  };
+
+
 
   const onManualRefresh = () => {
     if (selectedCampaign && !isAllLeadsLoading) {
@@ -629,6 +677,11 @@ const ActiveList = ({
                         <div
                           className="cursor-pointer"
                           onClick={async () => {
+                             if (selectedCampaignDetails?.message_config_uuid) {
+                              setSelectedWhatsappLead(val);
+                              setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
+                              setWhatsappModalVisible(true);
+                            } else {
                             try {
                               const res: any = await getWabaSsoTokenPost();
                               // debugger
@@ -641,6 +694,7 @@ const ActiveList = ({
                             } catch (err) {
                               Danger("Failed to generate SSO token");
                             }
+                          }
                           }}
                         >
                           <div className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[16px] h-[16px]">
@@ -754,6 +808,11 @@ const ActiveList = ({
                         <div
                           className="cursor-pointer"
                           onClick={async () => {
+                             if (selectedCampaignDetails?.message_config_uuid) {
+                              setSelectedWhatsappLead(val);
+                              setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
+                              setWhatsappModalVisible(true);
+                            } else {
                             try {
                               const res: any = await getWabaSsoTokenPost();
                               const redirectUrl = res?.data?.redirect_url;
@@ -765,6 +824,7 @@ const ActiveList = ({
                             } catch (err) {
                               Danger("Failed to generate SSO token");
                             }
+                          }
                           }}
                         >
                           <div className="relative 5xl:w-[24px] 5xl:h-[24px] 4xl:w-[20px] 4xl:-h-[20px] w-[16px] h-[16px]">
@@ -883,6 +943,7 @@ const ActiveList = ({
           <span className="3xl:text-base text-xs text-heading font-bold ">
             Active
           </span>
+           {headerAction}
           <div
             className={`relative h-[14px] w-[14px] 3xl:w-[16px] 3xl:h-[16px] mr-2 ${
               isAllLeadsLoading ? "cursor-not-allowed opacity-50" : "cursor-pointer"
@@ -926,6 +987,32 @@ const ActiveList = ({
           <>{renderActiveList()}</>
         )}
       </div>
+        <ConfirmationModal
+        title="Send WhatsApp Message"
+        doneText="Send Message"
+        cancelText="Cancel"
+        isLoading={whatsappLoading}
+        visible={whatsappModalVisible}
+        onCancleClick={() => {
+          setWhatsappModalVisible(false);
+          setSelectedWhatsappLead(null);
+          setWhatsappTargetNumber("");
+        }}
+        onDoneClick={handleWhatsAppConfirm}
+      >
+        <div className="mb-6 mt-2 pr-10">
+          <p className="text-xs font-normal text-txt-primary mb-3">
+            Are you sure you want to send a WhatsApp message? You can edit the number below before sending:
+          </p>
+          <input
+            type="text"
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-blue text-heading"
+            value={whatsappTargetNumber}
+            onChange={(e) => setWhatsappTargetNumber(e.target.value)}
+            placeholder="Enter phone number"
+          />
+        </div>
+      </ConfirmationModal>
     </>
   );
 };

@@ -11,7 +11,7 @@ import {
   onUnSelectCampaign,
 } from "@/redux/slice/chatSlice";
 import CallSummaryCards from "@/components/call-center-components/phone/CallSummaryCards";
-import { onSelectCampaign, onSelectCampaignMode, onSetCampaignType, setCampaignFetched, setCampaignUpdated, useCampaignFetched, useCampaignMode, useCampaignType, useCampaignUpdated, useIsCallHangUp, useSelectedCampaign, useSelectedCampaignDetails, useUserEntry } from "@/redux/slice/commonSlice";
+import { onSelectCampaign, onSelectCampaignMode, onSetCampaignType, setCampaignFetched, setCampaignUpdated, useCampaignFetched, useCampaignMode, useCampaignType, useCampaignUpdated, useIsCallHangUp, useSelectedCampaign, useSelectedCampaignDetails, useUserEntry,useCallScreen, } from "@/redux/slice/commonSlice";
 import { Button } from "@/components/forms";
 import { SocketProvider } from "@/contexts/chatSocket/SocketProvider";
 import { useAuth } from "@/contexts/hooks/useAuth";
@@ -20,8 +20,11 @@ import { getCampaign, getCampaignList, getCampaignOption, updateAgentCampaign } 
 import ActiveList from "@/components/call-center-components/phone/ActiveList";
 import { getAllLeads, useAllLeadDetails, useSingleLeadDetails } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import { LoginAgentCampaignKey, setLoginAgentCampaign } from "@/utils/Storage";
-import { Warning } from "@/redux/services/toasterService";
+import { Warning , Success, Danger } from "@/redux/services/toasterService";
 import Cookies from "js-cookie";
+import EmailModal from "@/components/modals/EmailModal";
+import { fetchAllowedTemplates, fetchApiConfig, submitSendEmail, submitSendApiEmail, useAllowedTemplates, useActiveApiConfig, useEmailIsLoading } from "@/redux/slice/emailSlice";
+import { Icon } from "@/components/ui-components";
 /* ============================== PHONE PAGE ============================== */
 
 export default function Phone() {
@@ -78,6 +81,77 @@ export default function Phone() {
   //       }
   //   }, [allLeadsDetails]);
 
+   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [showConfirmApiEmailModal, setShowConfirmApiEmailModal] = useState(false);
+  const [selectedApiTemplateId, setSelectedApiTemplateId] = useState<string>("");
+  const allowedTemplates = useAllowedTemplates();
+  const activeApiConfig = useActiveApiConfig();
+  const isEmailLoading = useEmailIsLoading();
+
+  const apiTemplates = useMemo(() => {
+    if (activeApiConfig?.templateId) {
+      return activeApiConfig.templateId.split(',').map((item: string) => {
+        const parts = item.split(':');
+        const id = parts[0].trim();
+        const name = parts[1] ? parts[1].trim() : `Template ID: ${id}`;
+        return { id, name };
+      }).filter((t: any) => t.id);
+    }
+    return [];
+  }, [activeApiConfig]);
+
+  const selectedApiTemplate = useMemo(() => {
+    return apiTemplates.find((t: any) => t.id === selectedApiTemplateId) || null;
+  }, [apiTemplates, selectedApiTemplateId]);
+
+  useEffect(() => {
+    if (apiTemplates.length > 0) {
+      setSelectedApiTemplateId(apiTemplates[0].id);
+    } else {
+      setSelectedApiTemplateId("");
+    }
+  }, [apiTemplates]);
+  const selectedCampaignDetails = useSelectedCampaignDetails();
+  const activeCampaignConfig = useMemo(() => {
+    if (campaignOptions?.length > 0 && selectedCampaign) {
+      const allOptions = campaignOptions.flatMap((group: any) => group.options || []);
+      return allOptions.find((c: any) => c.value === selectedCampaign) || null;
+    }
+    return selectedCampaignDetails || null;
+  }, [campaignOptions, selectedCampaign, selectedCampaignDetails]);
+  console.log(selectedCampaignDetails, 'selectedCampaignDetails');
+
+  const [isApiSending, setIsApiSending] = useState(false);
+
+  const handleSendApiEmail = async () => {
+    if (!currentLeadDetails) {
+      Danger("No active lead found to send email.");
+      return;
+    }
+
+    setIsApiSending(true);
+    try {
+      const payload = {
+        config_uuid: activeCampaignConfig?.api_config_uuid,
+        to: currentLeadDetails?.email || "",
+        lead_data: currentLeadDetails,
+        templateId: selectedApiTemplateId,
+      };
+
+      const result = await dispatch(submitSendApiEmail(payload)).unwrap();
+      if (result && (result.statusCode === 200 || result.statusCode === "200")) {
+        Success(result.message || "Email sent successfully via Netcore API.");
+      } else {
+        Danger(result?.message || "Failed to send email via Netcore API.");
+      }
+    } catch (err: any) {
+      Danger(err?.message || "An error occurred while sending email.");
+    } finally {
+      setIsApiSending(false);
+    }
+  };
   // 🔄 Use cookies as fallback for script data
   const userAgentCookie = Cookies.get("user_agent");
   const cookieData = userAgentCookie ? JSON.parse(userAgentCookie) : null;
@@ -151,6 +225,20 @@ export default function Phone() {
       setAgentScriptText(agentDetail.agent_script_text);
     }
   }, [agentDetail?.agent_script_text]);
+
+   useEffect(() => {
+    const activeConfigUuid = activeCampaignConfig?.email_type === "api"
+      ? activeCampaignConfig?.api_config_uuid
+      : activeCampaignConfig?.email_config_uuid;
+
+    if (activeConfigUuid) {
+      if (activeCampaignConfig?.email_type === "api") {
+        dispatch(fetchApiConfig(activeConfigUuid));
+      } else {
+        dispatch(fetchAllowedTemplates(activeConfigUuid));
+      }
+    }
+  }, [activeCampaignConfig?.email_config_uuid, activeCampaignConfig?.api_config_uuid, activeCampaignConfig?.email_type, dispatch]);
 
   // // RADIO OPTIONS
   const options = [
@@ -432,6 +520,101 @@ export default function Phone() {
                   setActiveId={setActiveId}
                   sectionClass="h-full"
                   sectionBodyClass="h-[calc(100%-3rem)]"
+                  headerAction={
+                  currentLeadDetails && (activeCampaignConfig?.email_config_uuid || activeCampaignConfig?.api_config_uuid) && (
+                      activeCampaignConfig?.email_type === "api" ? (
+                        <div className="relative">
+                          <Button
+                            text={showTemplateDropdown ? "Close" : (isApiSending ? "Sending..." : "Send Email")}
+                            className="px-2 py-1 rounded-md text-[10px] w-fit text-white"
+                            onClick={() => {
+                              if (!currentLeadDetails?.email || currentLeadDetails.email.trim() === "") {
+                                Danger("Email address is not present for this customer.");
+                                return;
+                              }
+                              setShowTemplateDropdown(!showTemplateDropdown);
+                            }}
+                            disabled={isApiSending}
+                          />
+                          {showTemplateDropdown && (
+                            <div className="absolute right-0 top-full mt-1 z-[100] bg-white shadow-2xl rounded-lg border border-gray-100 min-w-[150px] py-1 animate-in fade-in zoom-in duration-150">
+                              <div className="max-h-[250px] overflow-y-auto">
+                                {apiTemplates.length > 0 ? (
+                                  apiTemplates.map((t) => (
+                                    <div
+                                      key={t.id}
+                                      className="px-4 py-2 text-[11px] hover:bg-gray-50 cursor-pointer text-gray-700 font-bold border-b last:border-0 border-gray-50"
+                                      onClick={() => {
+                                        setSelectedApiTemplateId(t.id);
+                                        setShowConfirmApiEmailModal(true);
+                                        setShowTemplateDropdown(false);
+                                      }}
+                                    >
+                                      {t.name}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="px-4 py-2.5 text-[10px] text-gray-400 text-center">
+                                    No template IDs found
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <Button
+                            text={showTemplateDropdown ? "Close" : "Send Email"}
+                            className="px-2 py-1 rounded-md text-[10px] w-fit text-white"
+                            onClick={() => {
+                              if (!currentLeadDetails?.email || currentLeadDetails.email.trim() === "") {
+                                Danger("Email address is not present for this customer.");
+                                return;
+                              }
+                              setShowTemplateDropdown(!showTemplateDropdown);
+                            }}
+                          />
+                          {showTemplateDropdown && (
+                            <div className="absolute right-0 top-full mt-1 z-[100] bg-white shadow-2xl rounded-lg border border-gray-100 min-w-[200px] py-1 animate-in fade-in zoom-in duration-150">
+                              <div className="max-h-[250px] overflow-y-auto">
+                                {isEmailLoading ? (
+                                  <div className="px-4 py-3 text-[10px] text-gray-400 text-center flex items-center justify-center gap-2">
+                                    <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                    Loading templates...
+                                  </div>
+                                ) : Array.isArray(allowedTemplates) && allowedTemplates.length > 0 ? (
+                                  allowedTemplates.map((t) => (
+                                    <div
+                                      key={t.uuid}
+                                      className="px-4 py-2 text-[11px] hover:bg-gray-50 cursor-pointer text-gray-700 font-medium border-b last:border-0 border-gray-50"
+                                      onClick={() => {
+                                        setSelectedTemplate({ label: t.name, value: t.uuid });
+                                        setShowEmailModal(true);
+                                        setShowTemplateDropdown(false);
+                                      }}
+                                    >
+                                      {t.name}
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="px-4 py-2 text-[11px] hover:bg-gray-50 cursor-pointer text-gray-700 font-medium text-center"
+                                    onClick={() => {
+                                      setSelectedTemplate(null);
+                                      setShowEmailModal(true);
+                                      setShowTemplateDropdown(false);
+                                    }}
+                                  >
+                                    Send Custom Email
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )
+                  }
                 />
               </div>
             </div>
@@ -443,6 +626,60 @@ export default function Phone() {
           </div>*/}
         </div>
       </div>
+       {showConfirmApiEmailModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col overflow-hidden animate-in zoom-in duration-200 border border-gray-100">
+            {/* Header */}
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
+              <div className="p-2 bg-yellow-50 rounded-xl text-yellow-500">
+                <Icon name="Mail" width={24} height={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-gray-800">
+                  Confirm Email Send
+                </h3>
+                <p className="text-[11px] text-gray-400 font-medium">
+                  Netcore API Integration
+                </p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="text-sm font-semibold text-gray-600 mb-6 leading-relaxed">
+              Are you sure you want to send the email with template: <span className="text-primary font-extrabold">{selectedApiTemplate?.name || selectedApiTemplateId}</span> to <span className="text-gray-800 font-extrabold">{currentLeadDetails?.email || "this recipient"}</span>?
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 w-full">
+              <button
+                type="button"
+                onClick={() => setShowConfirmApiEmailModal(false)}
+                className="px-6 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 active:scale-[0.98] transition-all text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowConfirmApiEmailModal(false);
+                  await handleSendApiEmail();
+                }}
+                disabled={isApiSending}
+                className="px-8 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20 text-xs"
+              >
+                {isApiSending ? "Sending..." : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showEmailModal && (
+        <EmailModal
+          visible={showEmailModal}
+          onClose={() => setShowEmailModal(false)}
+          initialTemplateUuid={selectedTemplate?.value}
+        />
+      )}
     </SocketProvider>
   );
 }

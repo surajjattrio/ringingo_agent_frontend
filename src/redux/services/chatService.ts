@@ -15,6 +15,7 @@ import {
   UPDATE_CHANNEL,
   WHATS_APP_MESSAGE_LIST,
   GENERATE_WABA_SSO_TOKEN,
+  SEND_MESSAGE_CONFIG,
 } from "@/API/constAPI";
 import { apiInstance } from "../axiosApi";
 
@@ -81,4 +82,7 @@ export const chatHistoryPost = (payload: any) => {
 
 export const getWabaSsoTokenPost = () => {
   return apiInstance.post(GENERATE_WABA_SSO_TOKEN);
+};
+export const sendMessageConfigPost = (payload: any) => {
+  return apiInstance.post(SEND_MESSAGE_CONFIG, payload);
 };

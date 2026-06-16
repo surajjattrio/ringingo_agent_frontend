@@ -30,7 +30,7 @@ import authSlice from "./slice/authSlice";
 import breakSlice from "./slice/breakSlice";
 
 import chatSlice from "./slice/chatSlice";
-
+import emailSlice from "./slice/emailSlice";
 // REDUCERS
 const rootReducer = combineReducers({
   auth: authSlice,
@@ -58,6 +58,9 @@ const rootReducer = combineReducers({
 
   /* CHAT */
   chat: chatSlice,
+
+  /* EMAIL */
+  email: emailSlice,
 });
 
 const persistConfig = {
