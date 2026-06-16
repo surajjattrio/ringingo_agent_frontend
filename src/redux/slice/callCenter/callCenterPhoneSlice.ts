@@ -130,8 +130,8 @@ export const getAllLeads = createAsyncThunk(
 
       thunkAPI.dispatch(setAllLeadsLoading(false));
 
-      // Wait 10 seconds before next poll (only for Mode 2)
-      await delay(10000);
+      // Wait 5 seconds before next poll (only for Mode 2)
+      await delay(5000);
 
       if (!signal.aborted) {
         thunkAPI.dispatch(setAllLeadsLoading(true));
