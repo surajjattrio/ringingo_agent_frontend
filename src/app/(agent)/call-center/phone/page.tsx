@@ -141,7 +141,7 @@ export default function Phone() {
         templateId: selectedApiTemplateId,
       };
 
-      const result = await dispatch(submitSendApiEmail(payload)).unwrap();
+      const result: any = await dispatch(submitSendApiEmail(payload)).unwrap();
       if (result && (result.statusCode === 200 || result.statusCode === "200")) {
         Success(result.message || "Email sent successfully via Netcore API.");
       } else {
