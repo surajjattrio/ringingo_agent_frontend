@@ -411,15 +411,22 @@ export default function Phone() {
     }
   }
 
-  useEffect(() => {
-    if (userEntry === "login-entry") {
+  // useEffect(() => {
+    // if (userEntry === "login-entry") {
       // if (userEntry === "login-entry" && !campaignFetched) {
       // dispatch(setCampaignFetched(true));
       // onGetCampaign();
+      // campaignUpdate()
+    // }
+  // }, [userEntry]);
+  // }, [userEntry, campaignFetched]);
+
+    useEffect(() => {
+    if (userEntry === "login-entry" && !campaignFetched) {
+      dispatch(setCampaignFetched(true));
       campaignUpdate()
     }
-  }, [userEntry]);
-  // }, [userEntry, campaignFetched]);
+  }, [userEntry, campaignFetched]);
 
   // useEffect(() => {
   //   if (Object.keys(initialValues).length && !campaignUpdated) {

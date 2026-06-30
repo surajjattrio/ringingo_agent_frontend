@@ -126,7 +126,7 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
 
   const socketRef = useRef<any>(null);
   socketRef.current = getSocket(user);
-
+  const prevCampaignUuidRef = useRef<string | null>(null);
   // useEffect(() => {
   //   socketRef.current = io(process.env.BASE_URL!, {
   //     query: { agent_uuid: user?.agent_detail?.uuid },
@@ -198,8 +198,21 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
     }
   }, [campaignOptions, user]);
 
-  useEffect(() => {
-    liveChatOption(0);
+  // useEffect(() => {
+  //   liveChatOption(0);
+  // }, [selectedCampaign]);
+  
+   useEffect(() => {
+    if (selectedCampaign) {
+      const currentUuid = selectedCampaign.value;
+      if (prevCampaignUuidRef.current !== currentUuid) {
+        prevCampaignUuidRef.current = currentUuid;
+        liveChatOption(0);
+      }
+    } else {
+      prevCampaignUuidRef.current = null;
+      liveChatOption(0);
+    }
   }, [selectedCampaign]);
 
 
