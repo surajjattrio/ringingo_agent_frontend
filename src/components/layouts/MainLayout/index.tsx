@@ -165,9 +165,9 @@ useEffect(() => {
   useEffect(() => {
     if (prevIsCallHangUpRef.current !== null && prevIsCallHangUpRef.current !== isCallHangUp) {
       if (isCallHangUp) {
-        dispatch(agentEntryAdd({ login_status: "5" }));
+        dispatch(agentEntryAdd({ login_status: "5", campaign_uuid: selectedCampaign }));
       } else {
-        dispatch(agentEntryAdd({ login_status: "6" }));
+        dispatch(agentEntryAdd({ login_status: "6", campaign_uuid: selectedCampaign }));
       }
     }
     prevIsCallHangUpRef.current = isCallHangUp;
@@ -308,6 +308,7 @@ useEffect(() => {
     let payload = {
       login_status: "0",
       breakcode_uuid: breakValue?.uuid,
+      campaign_uuid: selectedCampaign,
     };
     let response: any = await dispatch(agentEntryAdd(payload)).unwrap();
 
@@ -421,6 +422,7 @@ useEffect(() => {
     let payload = {
       login_status: "1",
       breakcode_uuid: e.value,
+      campaign_uuid: selectedCampaign,
     };
     let response: any = await dispatch(agentEntryAdd(payload)).unwrap();
     dispatch(onStatusChange("1"));

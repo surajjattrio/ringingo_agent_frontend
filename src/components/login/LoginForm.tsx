@@ -403,6 +403,7 @@ const LoginForm = () => {
 
         let payload = {
           login_status: "0",
+          campaign_uuid: campaignUUID,
         };
         let response: any = await dispatch(agentEntryAdd(payload)).unwrap();
         if (

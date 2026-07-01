@@ -94,7 +94,7 @@ const LeadDialPage = (props: LeadDialPageProps) => {
                 console.log("iscall is call resumeeee", isCallResume)
                 dispatch(setCallResume(false));
                 onUpdateLiveAgentEntry("0");
-                dispatch(agentEntryAdd({ login_status: "3" }));
+                dispatch(agentEntryAdd({ login_status: "3", campaign_uuid: selectedCampaign }));
                 const call_status = Cookies.get("call_status");
                 //if(call_status == "pause"){
                 Cookies.set("call_status", "play");

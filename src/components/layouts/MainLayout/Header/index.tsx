@@ -413,7 +413,7 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
     try {
       let payload = {
         status: "6",
-        campaign_uuid: false,
+        campaign_uuid: selectedCampaign?.value,
         type: "hangup",
       };
       await dispatch(updateLiveAgentEntry(payload)).unwrap();
@@ -636,7 +636,7 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
       let payload = {
         extension: user?.agent_detail?.extension_details[0].username,
         status: "0",
-        campaign_uuid: false,
+        campaign_uuid: selectedCampaign?.value,
         type: "hangup",
       };
       await dispatch(updateLiveAgentEntry(payload)).unwrap();
