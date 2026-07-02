@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Legacy from "next/legacy/image";
 
 // PROJECT IMPORTS
@@ -28,6 +28,7 @@ import {
 import Cookies from "js-cookie";
 import { userAgentUnRegistration } from "../CallingModal";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
+import { getSocket } from "@/config/socket";
 
 // ASSETS
 const play_circle = "/assets/icons/red/play-circle.svg";
@@ -52,6 +53,7 @@ const LeadDialPage = (props: LeadDialPageProps) => {
     
     const dispatch = useAppDispatch();
     const { user } = useAuth();
+    const socketRef = useRef<any>(null);
 
     const onCallQueueInbound = async (feature: string, pause?: boolean) => {
         try {
@@ -146,8 +148,8 @@ const LeadDialPage = (props: LeadDialPageProps) => {
                 delete payload["username"];
                 dispatch(setCallResume(true));
                 onUpdateLiveAgentEntry("4");
-                dispatch(agentEntryAdd({ login_status: "4" }));
-                if (campaignType === "inbound"||campaignType==="blended") {
+                dispatch(agentEntryAdd({ login_status: "4", campaign_uuid: selectedCampaign }));
+                if (campaignType === "inbound" || campaignType === "blended") {
                     onCallQueueInbound("hang-up", true);
                     if (campaignType === "inbound") {
                         dispatch(setIsInboundCampaign(true));
@@ -223,6 +225,29 @@ const LeadDialPage = (props: LeadDialPageProps) => {
             console.log("Call resume changes Err --->", error?.message);
         }
     };
+
+    useEffect(() => {
+        socketRef.current = user ? getSocket(user) : null;
+    }, [user]);
+
+    useEffect(() => {
+        const socketInstance = socketRef.current;
+        console.log("socketttttt calleddddddddddddddddddddddddddddddddddddddd", socketInstance);
+        if (!socketInstance) return;
+
+        const handleAgentEvent = (event: any) => {
+            console.log("socketttttt handleAgentEvent", event);
+            if (event.type === "PAUSE" || event.type === "IDLE" || event.type === "OFF_BREAK") {
+                onCallTypeChange();
+            }
+        };
+
+        socketInstance.on("agent-event", handleAgentEvent);
+
+        return () => {
+            socketInstance.off("agent-event", handleAgentEvent);
+        };
+    }, [campaignMode, campaignType, isCallResume, isCallHangUp, selectedCampaign, user]);
 
     useEffect(() => {
         let interval = setInterval(() => {
