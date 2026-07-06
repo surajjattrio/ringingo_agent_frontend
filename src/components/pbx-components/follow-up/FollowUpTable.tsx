@@ -85,41 +85,47 @@ const FollowUpTable = () => {
         search: "",
         isAdvance: false,
     });
-// Fetching User Group Options
-const todayFollow = async ( ) => {
-    // alert("coming");
-    try {
-        if(isToday == true){
-            const params = { ...filter,
-                "today": true };
-            setIsToday(false);
-            await dispatch(getFollowUpList(params)).unwrap();
-        }else{
-            const params = { ...filter,
-                "today": false };
-            setIsToday(true);
-            await dispatch(getFollowUpList(params)).unwrap();
+    // Fetching User Group Options
+    const todayFollow = async () => {
+        // alert("coming");
+        try {
+            if (isToday == true) {
+                const params = {
+                    ...filter,
+                    "today": true
+                };
+                setIsToday(false);
+                await dispatch(getFollowUpList(params)).unwrap();
+            } else {
+                const params = {
+                    ...filter,
+                    "today": false
+                };
+                setIsToday(true);
+                await dispatch(getFollowUpList(params)).unwrap();
+            }
+
+
+            //await dispatch(followUpToday(params)).unwrap();
+
+            setIsLoading(false);
+        } catch (err) {
+            console.log("Get CRD Report error ---->", err);
+            setIsLoading(false);
         }
-        
-        
-        //await dispatch(followUpToday(params)).unwrap();
-        
-        setIsLoading(false);
-    } catch (err) {
-        console.log("Get CRD Report error ---->", err);
-        setIsLoading(false);
-    }
-};
+    };
     // GET CDR REPORT DETAILS
     const onGetFollowUps = useDebouncedCallback(async () => {
         try {
             setIsLoading(true);
             // const params = { ...filter };
-            const params = { ...filter,
-                "today": false };
+            const params = {
+                ...filter,
+                "today": false
+            };
             console.log("FOLLOW UP");
-            console.log(params); 
-            
+            console.log(params);
+
             console.log("FOLLOW UP");
             console.log(params);
             delete params["isAdvance"];
@@ -175,8 +181,8 @@ const todayFollow = async ( ) => {
                 //     ? format(new Date(data["date_time"]["val"]), "yyyy-MM-dd HH:mm:ss")
                 //     : "",
                 [data["date_time"]["key"]]: data["date_time"]["val"]
-                ? format(new Date(data["date_time"]["val"]), "yyyy-MM-dd")
-                : "",
+                    ? format(new Date(data["date_time"]["val"]), "yyyy-MM-dd")
+                    : "",
                 [data["type"]["key"]]: data["type"]["val"],
                 [data["is_readed"]["key"]]: data["is_readed"]["val"],
                 // page: filter?.page,
@@ -287,8 +293,8 @@ const todayFollow = async ( ) => {
             sortable: true,
         },
         {
-           // name: "converted_date",
-            name: "date_time",          
+            // name: "converted_date",
+            name: "date_time",
             title: "Follow Up Date",
             sortable: true,
         },
@@ -336,10 +342,10 @@ const todayFollow = async ( ) => {
                 return (
                     <label
                         className={`${row?.is_readed === "1"
-                                ? "text-error"
-                                : row?.is_readed === "0"
-                                    ? "text-primary-green"
-                                    : "text-primary-green"
+                            ? "text-error"
+                            : row?.is_readed === "0"
+                                ? "text-primary-green"
+                                : "text-primary-green"
                             }`}
                     >
                         {row.followUpStatus}
@@ -432,161 +438,163 @@ const todayFollow = async ( ) => {
     return (
         <>
             <div className="bg-white py-[7px] px-[3px] pb-[15px] rounded-[10px]">
-            <div className="pb-4">
-                <Head
-                    onChange={(e: any) =>
-                        setFilter({
-                            ...filter,
-                            page: 1,
-                            limit: 10,
-                            search: e.target.value,
-                            isAdvance: false,
-                        })
-                    }
-                    onTodayClick={todayFollow}
-                    filterOpen={filterOpen}
-                    onFilterClick={() => {
-                        setFilterOpen(!filterOpen);
+                <div className="pb-4">
+                    <Head
+                        onChange={(e: any) =>
+                            setFilter({
+                                ...filter,
+                                page: 1,
+                                limit: 10,
+                                search: e.target.value,
+                                isAdvance: false,
+                            })
+                        }
+                        onTodayClick={todayFollow}
+                        filterOpen={filterOpen}
+                        onFilterClick={() => {
+                            setFilterOpen(!filterOpen);
+                        }}
+                        onHide={onEmptySearch}
+                        onSearchClick={() => {
+                            setFilter({
+                                ...filter,
+                                page: 1,
+                                limit: 10,
+                                isAdvance: true,
+                            });
+                        }}
+                    >
+                        <div className="grid grid-cols-3 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
+                            <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                                <div className="text-xs font-semibold pb-2 flex items-center">
+                                    <label htmlFor="date_time">Date</label>
+                                </div>
+                                <DatePicker
+                                    name="date_time"
+                                    placeholder="Select date and time"
+                                    dateFormat="yyyy-MM-dd"
+                                    value={data.date_time.val ? new Date(data.date_time.val) : null}
+                                    onChange={(date: any) => {
+                                        handleChnage("date_time", date);
+                                    }}
+                                    isShowLabel={false}
+                                />
+                            </div>
+                            <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                                <div className="text-xs font-semibold pb-2 flex items-center">
+                                    <label htmlFor="type">Types</label>
+                                </div>
+                                <Select
+                                    height="32px"
+                                    name="type"
+                                    placeholder="Select type"
+                                    value={data.type.val}
+                                    options={followUpTypeOptions}
+                                    onChange={(e: any) => handleChnage("type", e.target.value)}
+                                    isShowLabel={false}
+                                    isInfo={false}
+                                />
+                            </div>
+                            <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                                <div className="text-xs font-semibold pb-2 flex items-center">
+                                    <label htmlFor="is_readed">Status</label>
+                                </div>
+                                <Select
+                                    height="32px"
+                                    name="is_readed"
+                                    placeholder="Select status"
+                                    value={data.is_readed.val}
+                                    options={followUpStatusOptions}
+                                    onChange={(e: any) => handleChnage("is_readed", e.target.value)}
+                                    isShowLabel={false}
+                                    isInfo={false}
+                                />
+                            </div>
+                        </div>
+                    </Head>
+                </div>
+                <div className="grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0">
+                    <div className={`${showInfo ? "col-span-2" : "col-span-3"} `}>
+                        <Table
+                            isLoading={isLoading}
+                            columns={columns}
+                            data={followUpList?.data}
+                            page={filter.page}
+                            totalCount={followUpList?.count || 0}
+                            limit={filter.limit}
+                            onPageClick={(page: number) => {
+                                setFilter({
+                                    ...filter,
+                                    page,
+                                });
+                            }}
+                            onLimitChange={(limit: number) => {
+                                setFilter({
+                                    ...filter,
+                                    limit,
+                                    page: 1,
+                                });
+                            }}
+                            onRefreshClick={() => {
+                                setFilter({
+                                    ...filter,
+                                });
+                            }}
+                            firstPageClick={() => {
+                                setFilter({
+                                    ...filter,
+                                    page: 1,
+                                });
+                            }}
+                            lastPageClick={() => {
+                                setFilter({
+                                    ...filter,
+                                    page: Math.ceil(followUpList?.count / filter.limit),
+                                });
+                            }}
+                        />
+                    </div>
+                    {showInfo && (
+                        <div className="col-span-1">
+                            {
+                                <FollowUpRescheduledInformation
+                                    rescheduledInfo={rescheduledFollowUp}
+                                    setRescheduledFollowUp={setRescheduledFollowUp}
+                                    onCloseClick={() => {
+                                        setShowInfo(false);
+                                        setRescheduledFollowUp(null);
+                                    }}
+                                />
+                            }
+                        </div>
+                    )}
+                </div>
+                <FollowUpModal
+                    visible={!!isEditId}
+                    onCancleClick={() => {
+                        setIsFollowUpData("");
+                        setIsEditId(null);
                     }}
-                    onHide={onEmptySearch}
-                    onSearchClick={() => {
+                    data={isFollowUpData}
+                    isEditId={isEditId}
+                    onDoneClick={() => {
                         setFilter({
                             ...filter,
                             page: 1,
                             limit: 10,
-                            isAdvance: true,
                         });
                     }}
-                >
-                    <div className="grid grid-cols-3 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
-                        <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
-                            <DatePicker
-                                name="date_time"
-                                label="Date"
-                                placeholder="Select date and time"
-                                // dateFormat="yyyy-MM-dd HH:mm:ss"
-                                // value={data.date_time.val}
-                                // onChange={(e: any) => {
-                                //     handleChnage("date_time", e);
-                                // }}
-                                // showTimeSelect
-                                dateFormat="yyyy-MM-dd"
-                                value={data.date_time.val ? new Date(data.date_time.val) : null}
-                                onChange={(date: any) => {
-                                    handleChnage("date_time", date);
-                                }}
-                                isInfo
-                            />
-                        </div>
-                        <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
-                            <Select
-                                height="32px"
-                                name="type"
-                                label="Types"
-                                placeholder="Select type"
-                                value={data.type.val}
-                                options={followUpTypeOptions}
-                                onChange={(e: any) => handleChnage("type", e.target.value)}
-                                isInfo
-                            />
-                        </div>
-                        <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
-                            <Select
-                                height="32px"
-                                name="is_readed"
-                                label="Status"
-                                placeholder="Select status"
-                                value={data.is_readed.val}
-                                options={followUpStatusOptions}
-                                onChange={(e: any) => handleChnage("is_readed", e.target.value)}
-                                isInfo
-                            />
-                        </div>
-                    </div>
-                </Head>
-            </div>
-            <div className="grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0">
-                <div className={`${showInfo ? "col-span-2" : "col-span-3"} `}>
-                    <Table
-                        isLoading={isLoading}
-                        columns={columns}
-                        data={followUpList?.data}
-                        page={filter.page}
-                        totalCount={followUpList?.count || 0}
-                        limit={filter.limit}
-                        onPageClick={(page: number) => {
-                            setFilter({
-                                ...filter,
-                                page,
-                            });
-                        }}
-                        onLimitChange={(limit: number) => {
-                            setFilter({
-                                ...filter,
-                                limit,
-                                page: 1,
-                            });
-                        }}
-                        onRefreshClick={() => {
-                            setFilter({
-                                ...filter,
-                            });
-                        }}
-                        firstPageClick={() => {
-                            setFilter({
-                                ...filter,
-                                page: 1,
-                            });
-                        }}
-                        lastPageClick={() => {
-                            setFilter({
-                                ...filter,
-                                page: Math.ceil(followUpList?.count / filter.limit),
-                            });
-                        }}
-                    />
-                </div>
-                {showInfo && (
-                    <div className="col-span-1">
-                        {
-                            <FollowUpRescheduledInformation
-                                rescheduledInfo={rescheduledFollowUp}
-                                setRescheduledFollowUp={setRescheduledFollowUp}
-                                onCloseClick={() => {
-                                    setShowInfo(false);
-                                    setRescheduledFollowUp(null);
-                                }}
-                            />
-                        }
-                    </div>
-                )}
-            </div>
-            <FollowUpModal
-                visible={!!isEditId}
-                onCancleClick={() => {
-                    setIsFollowUpData("");
-                    setIsEditId(null);
-                }}
-                data={isFollowUpData}
-                isEditId={isEditId}
-                onDoneClick={() => {
-                    setFilter({
-                        ...filter,
-                        page: 1,
-                        limit: 10,
-                    });
-                }}
-                onSetReadedFollowUp={() => {
-                    onSetReadedFollowUp(isEditId);
-                }}
-                loading={loading}
-            />
-            <DeleteModal
-                isLoading={isLoading}
-                visible={!!deleteId}
-                onCancleClick={() => setDeleteId("")}
-                onDoneClick={() => onDeleteFollowUP(deleteId)}
-            />
+                    onSetReadedFollowUp={() => {
+                        onSetReadedFollowUp(isEditId);
+                    }}
+                    loading={loading}
+                />
+                <DeleteModal
+                    isLoading={isLoading}
+                    visible={!!deleteId}
+                    onCancleClick={() => setDeleteId("")}
+                    onDoneClick={() => onDeleteFollowUP(deleteId)}
+                />
             </div>
         </>
     );

@@ -16,13 +16,14 @@ import {
   useNumberMasking,
   useSelectedCampaign,
 } from "@/redux/slice/commonSlice";
+import { getCampaign } from "@/redux/slice/campaignSlice";
 import { Danger } from "@/redux/services/toasterService";
 import { SEARCH_ERROR_MESSAGE } from "@/config/constant";
 import { advanceSearchOptions } from "@/config/options";
 import { useAuth } from "@/contexts/hooks/useAuth";
 import LeadInformation from "./LeadInformation";
 import { Table, Head, ToolTipIcon } from "../../ui-components";
-import { InputSelect } from "../../forms";
+import { InputSelect, Select } from "../../forms";
 import { FollowUpModal, NoteModel } from "../../modals";
 import CreateLead from "../phone/CreateLead";
 import LeadNote from "./LeadNote";
@@ -70,6 +71,8 @@ const MyLeadTable = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [noteData, setNoteData] = useState<any>(null);
   const [leadUuid, setLeadUuid] = useState<any>(null);
+  const [campaignOptions, setCampaignOptions] = useState<any[]>([]);
+  const [selectedCampaignFilter, setSelectedCampaignFilter] = useState<string>("");
   const [filter, setFilter] = useState<FilterTypes>({
     page: 1,
     limit: 10,
@@ -77,14 +80,46 @@ const MyLeadTable = () => {
     isAdvance: false,
   });
 
-  console.log("isFollowUpData",isFollowUpData);
-  
+  console.log("isFollowUpData", isFollowUpData);
+
+  // FETCH CAMPAIGN OPTIONS FOR FILTER DROPDOWN
+  const onGetCampaignOptions = async () => {
+    try {
+      const res: any = await dispatch(getCampaign({ list: "all" })).unwrap();
+      if (res?.statusCode === 200) {
+        const inbound = (res?.data?.inbound_campaign || []).map((x: any) => ({
+          value: x.uuid,
+          label: x.name,
+        }));
+        const outbound = (res?.data?.outbound_campaign || []).map((x: any) => ({
+          value: x.uuid,
+          label: x.name,
+        }));
+        const blended = (res?.data?.blended_campaign || []).map((x: any) => ({
+          value: x.uuid,
+          label: x.name,
+        }));
+        setCampaignOptions([...inbound, ...outbound, ...blended]);
+      }
+    } catch (error: any) {
+      console.log("Get campaign options error ---->", error?.message);
+    }
+  };
+
+  useEffect(() => {
+    onGetCampaignOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // GET LEAD LIST
   const onGetLeadList = useDebouncedCallback(async () => {
     try {
       setIsLoading(true);
-      const params = { ...filter };
+      const params: any = { ...filter };
       delete params["isAdvance"];
+      if (selectedCampaignFilter) {
+        params["campaign_uuid"] = selectedCampaignFilter;
+      }
       await dispatch(getLeadList(params)).unwrap();
       setIsLoading(false);
     } catch (error: any) {
@@ -124,7 +159,8 @@ const MyLeadTable = () => {
       !(
         data["first_name"]["val"] ||
         data["last_name"]["val"] ||
-        data["custom_phone_number"]["val"]
+        data["custom_phone_number"]["val"] ||
+        selectedCampaignFilter
       )
     ) {
       Danger(SEARCH_ERROR_MESSAGE);
@@ -156,6 +192,7 @@ const MyLeadTable = () => {
   // ADVANCE SEARCH Fields Empty & Fetching Conference Data
   const onEmptySearch = () => {
     setFilterOpen(false);
+    setSelectedCampaignFilter("");
     setFilter({ ...filter, page: 1, limit: 10, isAdvance: false });
     setData(initialValues);
   };
@@ -244,8 +281,8 @@ const MyLeadTable = () => {
       title: "Action",
       sortable: false,
       action: (row: any) => {
-        console.log("rowww",row);
-        
+        console.log("rowww", row);
+
         return (
           <>
             <div className="flex items-center gap-2">
@@ -354,7 +391,7 @@ const MyLeadTable = () => {
               }
             }}
           >
-            <div className="grid grid-cols-3 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
+            <div className="grid grid-cols-4 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
               <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
                 <InputSelect
                   name="first_name"
@@ -369,7 +406,7 @@ const MyLeadTable = () => {
                   onDropdownChange={(e: any) =>
                     handleSelect("first_name", e.target.value)
                   }
-                  isInfo
+                // isInfo
                 />
               </div>
               <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
@@ -386,7 +423,7 @@ const MyLeadTable = () => {
                   onDropdownChange={(e: any) =>
                     handleSelect("last_name", e.target.value)
                   }
-                  isInfo
+                // isInfo
                 />
               </div>
               <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
@@ -404,20 +441,38 @@ const MyLeadTable = () => {
                   onDropdownChange={(e: any) =>
                     handleSelect("custom_phone_number", e.target.value)
                   }
-                  isInfo
+                // isInfo
+                />
+              </div>
+              <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                <div className="text-xs font-semibold pb-2 flex items-center">
+                  <label htmlFor="campaign_uuid">Campaign</label>
+                </div>
+                <Select
+                  name="campaign_uuid"
+                  placeholder="Select campaign"
+                  value={selectedCampaignFilter}
+                  options={campaignOptions}
+                  isClearable
+                  isShowLabel={false}
+                  isInfo={false}
+                  onChange={(e: any) => {
+                    const val = e?.target?.value || "";
+                    setSelectedCampaignFilter(val);
+                    setFilter((prev) => ({ ...prev, page: 1 }));
+                  }}
                 />
               </div>
             </div>
           </Head>
         </div>
         <div
-          className={`${
-            infoData || isCreateLead
-              ? // grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0
-                // "grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0"
-                "grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0 "
-              : ""
-          }`}
+          className={`${infoData || isCreateLead
+            ? // grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0
+            // "grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0"
+            "grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0 "
+            : ""
+            }`}
         >
           <div className="col-span-2 ">
             <Table

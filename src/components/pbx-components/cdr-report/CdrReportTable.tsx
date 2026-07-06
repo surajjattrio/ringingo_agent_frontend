@@ -301,9 +301,11 @@ const CdrReportTable = () => {
             >
               <div className="grid grid-cols-3 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="callstart">From Date</label>
+                  </div>
                   <DatePicker
                     name="callstart"
-                    label="From Date"
                     placeholder="Select from date"
                     dateFormat="yyyy-MM-dd HH:mm:ss"
                     value={data.callstart.val}
@@ -315,13 +317,15 @@ const CdrReportTable = () => {
                     }}
                     showTimeSelect
                     selectsStart
-                    isInfo
+                    isShowLabel={false}
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="callend">To Date</label>
+                  </div>
                   <DatePicker
                     name="callend"
-                    label="To Date"
                     placeholder="Select to date"
                     dateFormat="yyyy-MM-dd HH:mm:ss"
                     value={data.callend.val}
@@ -334,7 +338,7 @@ const CdrReportTable = () => {
                     }}
                     showTimeSelect
                     selectsEnd
-                    isInfo
+                    isShowLabel={false}
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
@@ -352,33 +356,38 @@ const CdrReportTable = () => {
                     onDropdownChange={(e: any) =>
                       handleSelect("destination_number", e.target.value)
                     }
-                    isInfo
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="call_mode">Call Mode</label>
+                  </div>
                   <Select
                     name="call_mode"
-                    label="Call Mode"
                     placeholder="Select call mode"
                     value={data.call_mode.val}
                     options={callModeOptions}
                     onChange={(e: any) =>
                       handleChnage("call_mode", e.target.value)
                     }
-                    isInfo
+                    isShowLabel={false}
+                    isInfo={false}
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="disposition">Hangup Cause</label>
+                  </div>
                   <Select
                     name="disposition"
-                    label="Hangup Cause"
                     placeholder="Select hangup cause"
                     value={data.disposition.val}
                     options={typeOptions}
                     onChange={(e: any) =>
                       handleChnage("disposition", e.target.value)
                     }
-                    isInfo
+                    isShowLabel={false}
+                    isInfo={false}
                   />
                 </div>
               </div>

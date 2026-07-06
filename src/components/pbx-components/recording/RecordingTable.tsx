@@ -328,9 +328,11 @@ const RecordingTable = () => {
             >
               <div className="grid grid-cols-3 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="callstart">From Date</label>
+                  </div>
                   <DatePicker
                     name="callstart"
-                    label="From Date"
                     placeholder="Select from date"
                     dateFormat="yyyy-MM-dd HH:mm:ss"
                     value={data.callstart.val}
@@ -342,13 +344,15 @@ const RecordingTable = () => {
                     }}
                     showTimeSelect
                     selectsStart
-                    isInfo
+                    isShowLabel={false}
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="callend">To Date</label>
+                  </div>
                   <DatePicker
                     name="callend"
-                    label="To Date"
                     placeholder="Select to date"
                     dateFormat="yyyy-MM-dd HH:mm:ss"
                     value={data.callend.val}
@@ -361,7 +365,7 @@ const RecordingTable = () => {
                     }}
                     showTimeSelect
                     selectsEnd
-                    isInfo
+                    isShowLabel={false}
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
@@ -378,7 +382,6 @@ const RecordingTable = () => {
                     onDropdownChange={(e: any) =>
                       handleSelect("caller_id_name", e.target.value)
                     }
-                    isInfo
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
@@ -395,7 +398,6 @@ const RecordingTable = () => {
                     onDropdownChange={(e: any) =>
                       handleSelect("caller_id_number", e.target.value)
                     }
-                    isInfo
                   />
                 </div>
                 <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
@@ -413,7 +415,6 @@ const RecordingTable = () => {
                     onDropdownChange={(e: any) =>
                       handleSelect("destination_number", e.target.value)
                     }
-                    isInfo
                   />
                 </div>
               </div>
