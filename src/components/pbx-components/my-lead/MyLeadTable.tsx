@@ -135,7 +135,7 @@ const MyLeadTable = () => {
       onGetLeadList();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, selectedCampaignFilter]);
 
   // ADVANCE SEARCH - Trigger when left side Input or Select value change
   const handleChnage = (key: string, val: string) => {
@@ -168,14 +168,17 @@ const MyLeadTable = () => {
     }
     try {
       setIsLoading(true);
-      const payload = {
+      const payload: any = {
         [data["first_name"]["key"]]: data["first_name"]["val"],
         [data["last_name"]["key"]]: data["last_name"]["val"],
         [data["custom_phone_number"]["key"]]:
           data["custom_phone_number"]["val"],
-        // page: filter?.page,
-        // limit: filter?.limit,
+        page: filter?.page,
+        limit: filter?.limit,
       };
+      if (selectedCampaignFilter) {
+        payload["campaign_uuid"] = selectedCampaignFilter;
+      }
       Object.entries(payload)?.forEach(([key, val]: any) => {
         if (!val) {
           delete payload[key];

@@ -14,6 +14,7 @@ import {
     useCampaignType,
     useNumberMasking,
 } from "@/redux/slice/commonSlice";
+import { getCampaign } from "@/redux/slice/campaignSlice";
 import { useAppDispatch } from "@/redux/hooks";
 import {
     advanceSearchOptions,
@@ -68,9 +69,11 @@ const CdrReportTable = () => {
     const numberMasking = useNumberMasking();
     const campaignType = useCampaignType();
     const { user } = useAuth();
-    const [data, setData] = useState<any>(initialValues);
+     const [data, setData] = useState<any>(initialValues);
     const [filterOpen, setFilterOpen] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [campaignOptions, setCampaignOptions] = useState<any[]>([]);
+    const [selectedCampaignFilter, setSelectedCampaignFilter] = useState<string>("");
     const [filter, setFilter] = useState<FilterTypes>({
         page: 1,
         limit: 10,
@@ -78,12 +81,44 @@ const CdrReportTable = () => {
         isAdvance: false,
     });
 
+     // FETCH CAMPAIGN OPTIONS FOR FILTER DROPDOWN
+    const onGetCampaignOptions = async () => {
+        try {
+            const res: any = await dispatch(getCampaign({ list: "all" })).unwrap();
+            if (res?.statusCode === 200) {
+                const inbound = (res?.data?.inbound_campaign || []).map((x: any) => ({
+                    value: x.uuid,
+                    label: x.name,
+                }));
+                const outbound = (res?.data?.outbound_campaign || []).map((x: any) => ({
+                    value: x.uuid,
+                    label: x.name,
+                }));
+                const blended = (res?.data?.blended_campaign || []).map((x: any) => ({
+                    value: x.uuid,
+                    label: x.name,
+                }));
+                setCampaignOptions([...inbound, ...outbound, ...blended]);
+            }
+        } catch (error: any) {
+            console.log("Get campaign options error ---->", error?.message);
+        }
+    };
+
+    useEffect(() => {
+        onGetCampaignOptions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // GET CDR REPORT DETAILS
     const onGetCdrReport = useDebouncedCallback(async () => {
         try {
             setIsLoading(true);
-            const params = { ...filter };
+            const params: any = { ...filter };
             delete params["isAdvance"];
+            if (selectedCampaignFilter) {
+                params["campaign_uuid"] = selectedCampaignFilter;
+            }
             await dispatch(getCdrReport(params)).unwrap();
             setIsLoading(false);
         } catch (error: any) {
@@ -99,7 +134,7 @@ const CdrReportTable = () => {
             onGetCdrReport();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter]);
+    }, [filter, selectedCampaignFilter]);
 
     // ADVANCE SEARCH - Trigger when left side Input or Select value change
     const handleChnage = (key: string, val: string) => {
@@ -117,7 +152,7 @@ const CdrReportTable = () => {
         });
     };
 
-    // ADVANCE SEARCH - Searching Data API call
+     // ADVANCE SEARCH - Searching Data API call
     const onSearchData = async () => {
         if (
             !(
@@ -125,7 +160,8 @@ const CdrReportTable = () => {
                 data["callend"]["val"] ||
                 data["destination_number"]["val"] ||
                 data["disposition"]["val"] ||
-                data["call_mode"]["val"]
+                data["call_mode"]["val"] ||
+                selectedCampaignFilter
             )
         ) {
             Danger(SEARCH_ERROR_MESSAGE);
@@ -148,6 +184,9 @@ const CdrReportTable = () => {
                 page: filter?.page,
                 limit: filter?.limit,
             };
+            if (selectedCampaignFilter) {
+                payload["campaign_uuid"] = selectedCampaignFilter;
+            }
             Object.entries(payload)?.forEach(([key, val]: any) => {
                 if (!val) {
                     delete payload[key];
@@ -164,6 +203,7 @@ const CdrReportTable = () => {
     // ADVANCE SEARCH Fields Empty & Fetching Conference Data
     const onEmptySearch = () => {
         setFilterOpen(false);
+        setSelectedCampaignFilter("");
         setFilter({ ...filter, page: 1, limit: 10, isAdvance: false });
         setData(initialValues);
     };
@@ -235,6 +275,19 @@ const CdrReportTable = () => {
             name: "call_mode_name",
             title: "Call Mode",
             sortable: true,
+        },
+        {
+            name: "campaign_name",
+            title: "Campaign Name",
+            sortable: true,
+            action: (row: any) => {
+                const campaignName =
+                    row?.outbound_campaign?.[0]?.name ||
+                    row?.inbound_campaign?.[0]?.name ||
+                    row?.blended_campaign?.[0]?.name ||
+                    "-";
+                return <span>{campaignName}</span>;
+            },
         },
         {
             name: "disposition",
@@ -388,6 +441,25 @@ const CdrReportTable = () => {
                     }
                     isShowLabel={false}
                     isInfo={false}
+                  />
+                </div>
+                <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                  <div className="text-xs font-semibold pb-2 flex items-center">
+                    <label htmlFor="campaign_uuid">Campaign</label>
+                  </div>
+                  <Select
+                    name="campaign_uuid"
+                    placeholder="Select campaign"
+                    value={selectedCampaignFilter}
+                    options={campaignOptions}
+                    isClearable
+                    isShowLabel={false}
+                    isInfo={false}
+                    onChange={(e: any) => {
+                      const val = e?.target?.value || "";
+                      setSelectedCampaignFilter(val);
+                      setFilter((prev) => ({ ...prev, page: 1 }));
+                    }}
                   />
                 </div>
               </div>
