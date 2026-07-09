@@ -26,16 +26,22 @@ const info = "/assets/icons/info-circle.svg";
 import { columnsType } from "@/types/tableTypes";
 import { FilterTypes } from "@/types/filterTypes";
 
-// FILTER STATE
+// NAME STATE
+const now = new Date();
+const startOfToday = new Date(now);
+startOfToday.setHours(0, 0, 0, 0);
+const endOfToday = new Date(now);
+endOfToday.setHours(23, 59, 59, 999);
+
 const initialValues = {
   startDate: {
     key: "startDate",
-    val: "",
+    val: startOfToday,
     dropdown: "1",
   },
   endDate: {
     key: "endDate",
-    val: "",
+    val: endOfToday,
     dropdown: "1",
   },
 };

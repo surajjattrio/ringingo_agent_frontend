@@ -76,14 +76,10 @@ const cdrReportSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(getCdrReport.fulfilled, (state, action: PayloadAction<any>) => {
-        console.log(action?.payload,'action payloadaction.payload');
-        
-        const newData =
-          typeof action.payload === "string" ? [] : action.payload;
-        console.log(newData,'action newDatanewData');
-        
+
+        const newData = typeof action.payload === "string" ? [] : action.payload;
+
         newData?.data.map((val: any) => {
-          console.log(val,'valvalvalval');
           // const bs = toSeconds(val?.billsecond);
           // let newTime: any = intervalToDuration({
           //   start: 0,
@@ -92,7 +88,7 @@ const cdrReportSlice = createSlice({
 
           // });
           // console.log(newTime,'newTimenewTime');
-          
+
           // val.duration = `${(newTime?.hours > 9 ? newTime.hours : "0" + newTime.hours) +
           //   ":" +
           //   (newTime?.minutes > 9 ? newTime.minutes : "0" + newTime.minutes) +
@@ -102,11 +98,11 @@ const cdrReportSlice = createSlice({
           val.date = val.callstart;
           val.PhoneNumber =
             val?.direction === "outbound"
-              ? val?.destination_number.replace("\\", "").replace("+", "")
+              ? val?.destination_number?.replace("\\", "")?.replace("+", "") || ""
               : val?.caller_id_number;
           val.destination_number = val.destination_number
-            .replace("\\", "")
-            .replace("+", "");
+            ?.replace("\\", "")
+            ?.replace("+", "") || "";
           val.call_mode_name =
             val?.call_mode === "0"
               ? "PBX"
@@ -115,11 +111,11 @@ const cdrReportSlice = createSlice({
                 : "";
         });
         console.log("haaloo");
-        
-        console.log(newData,'action state.cdrReportDetailsstate.cdrReportDetails');
+
+        console.log(newData, 'action state.cdrReportDetailsstate.cdrReportDetails');
         state.cdrReportDetails = newData;
         state.isLoading = false;
-        
+
       })
       .addCase(getCdrReport.rejected, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
@@ -135,10 +131,16 @@ const cdrReportSlice = createSlice({
             typeof action.payload === "string" ? [] : action.payload;
 
           newData?.data.map((val: any) => {
-            let newTime: any = intervalToDuration({
-              start: 0,
-              end: val.billsecond * 1000,
-            });
+            const seconds = Number(val.billsecond) || 0;
+            let newTime: any = { hours: 0, minutes: 0, seconds: 0 };
+            try {
+              newTime = intervalToDuration({
+                start: 0,
+                end: seconds * 1000,
+              });
+            } catch (err) {
+              console.error("Error converting duration:", err);
+            }
             val.duration = `${(newTime?.hours > 9 ? newTime.hours : "0" + newTime.hours) +
               ":" +
               (newTime?.minutes > 9 ? newTime.minutes : "0" + newTime.minutes) +
@@ -148,11 +150,11 @@ const cdrReportSlice = createSlice({
             val.date = val.callstart;
             val.PhoneNumber =
               val?.direction === "outbound"
-                ? val?.destination_number.replace("\\", "").replace("+", "")
+                ? val?.destination_number?.replace("\\", "")?.replace("+", "") || ""
                 : val?.caller_id_number;
             val.destination_number = val.destination_number
-              .replace("\\", "")
-              .replace("+", "");
+              ?.replace("\\", "")
+              ?.replace("+", "") || "";
             val.call_mode_name =
               val?.call_mode === "0"
                 ? "PBX"

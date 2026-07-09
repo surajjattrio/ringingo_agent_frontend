@@ -48,10 +48,14 @@ import { columnsType } from "@/types/tableTypes";
 import { FilterTypes } from "@/types/filterTypes";
 
 // NAME STATE
+const now = new Date();
+const startOfToday = new Date(now);
+startOfToday.setHours(0, 0, 0, 0);
+
 const initialValues = {
     date_time: {
         key: "date_time",
-        val: "",
+        val: startOfToday,
         dropdown: "1",
     },
     type: { key: "type|4", val: "" },

@@ -36,15 +36,21 @@ import { FilterTypes } from "@/types/filterTypes";
 import { RecordingFilterTypes } from "@/types/advancedFilterTypes";
 
 // NAME STATE
+const now = new Date();
+const startOfToday = new Date(now);
+startOfToday.setHours(0, 0, 0, 0);
+const endOfToday = new Date(now);
+endOfToday.setHours(23, 59, 59, 999);
+
 const initialValues: RecordingFilterTypes = {
     callstart: {
         key: "callstart",
-        val: "",
+        val: startOfToday,
         dropdown: "1",
     },
     callend: {
         key: "callend",
-        val: "",
+        val: endOfToday,
         dropdown: "1",
     },
     caller_id_name: { key: "caller_id_name|1", val: "", dropdown: "1" },

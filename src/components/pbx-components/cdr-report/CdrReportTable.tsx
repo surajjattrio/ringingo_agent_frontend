@@ -44,15 +44,21 @@ import { FilterTypes } from "@/types/filterTypes";
 import { CdrsReportFilterTypes } from "@/types/advancedFilterTypes";
 
 // NAME STATE
+const now = new Date();
+const startOfToday = new Date(now);
+startOfToday.setHours(0, 0, 0, 0);
+const endOfToday = new Date(now);
+endOfToday.setHours(23, 59, 59, 999);
+
 const initialValues: CdrsReportFilterTypes = {
     callstart: {
         key: "callstart",
-        val: "",
+        val: startOfToday,
         dropdown: "1",
     },
     callend: {
         key: "callend",
-        val: "",
+        val: endOfToday,
         dropdown: "1",
     },
     destination_number: { key: "destination_number|1", val: "", dropdown: "1" },
@@ -134,7 +140,7 @@ const CdrReportTable = () => {
             onGetCdrReport();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter, selectedCampaignFilter]);
+    }, [filter]);
 
     // ADVANCE SEARCH - Trigger when left side Input or Select value change
     const handleChnage = (key: string, val: string) => {
@@ -458,7 +464,6 @@ const CdrReportTable = () => {
                     onChange={(e: any) => {
                       const val = e?.target?.value || "";
                       setSelectedCampaignFilter(val);
-                      setFilter((prev) => ({ ...prev, page: 1 }));
                     }}
                   />
                 </div>
