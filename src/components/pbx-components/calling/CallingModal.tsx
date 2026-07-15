@@ -2268,7 +2268,11 @@ const CallingModal = (props: CallingModelProps) => {
       .start()
       .then(() => {
         console.log("Connected ....");
-        const registerer = new Registerer(userAgent);
+        // Shorter expires (120s) forces re-REGISTER every ~60-90s, preventing
+        // NAT/firewall timeouts from silently dropping the SIP contact during
+        // long idle periods — which would cause calls to be abandoned.
+        // const registerer = new Registerer(userAgent); // OLD: default 600s expires
+        const registerer = new Registerer(userAgent, { expires: 120 });
         registerer.stateChange.addListener(
           (registrationState: RegistererState) => {
             console.log("registrationState", registrationState);
@@ -2281,27 +2285,46 @@ const CallingModal = (props: CallingModelProps) => {
               case RegistererState.Registered:
                 console.log("Registered11111 ....");
                 dispatch(setWebRtcStatus('CONNECTED'));
-                Cookies.set("logout_count", "", { expires: 1 });
+                // Clear logout_count on successful registration so transient
+                // disconnects don't accumulate toward the force-logout threshold.
+                Cookies.set("logout_count", "0", { expires: 1 });
                 break;
               case RegistererState.Unregistered:
                 console.log("Unregistered ....");
                 dispatch(setWebRtcStatus('DISCONNECTED'));
+                // Always attempt to re-register when unregistered, as long as
+                // the user is still logged in (user object present).
                 if (!!user) {
                   setTimeout(() => {
                     userAgentRegistration();
                   }, 3000);
                 }
-                let start: any = 1;
-                let count: any = Cookies.get("logout_count");
-                if (count === "") {
-                  Cookies.set("logout_count", start, { expires: 1 });
-                } else {
-                  count = 2;
-                  Cookies.set("logout_count", count, { expires: 1 });
-                }
-                count = Cookies.get("logout_count");
-                if (count === "2") {
-                  Cookies.set("logout_count", "", { expires: 1 });
+                // OLD logout_count logic (broken): count was never "" on first
+                // disconnect (cookie is undefined, not ""), so it went straight
+                // to count=2 and force-logged the agent out after 2 disconnects.
+                // let start: any = 1;
+                // let count: any = Cookies.get("logout_count");
+                // if (count === "") {
+                //   Cookies.set("logout_count", start, { expires: 1 });
+                // } else {
+                //   count = 2;
+                //   Cookies.set("logout_count", count, { expires: 1 });
+                // }
+                // count = Cookies.get("logout_count");
+                // if (count === "2") {
+                //   Cookies.set("logout_count", "", { expires: 1 });
+                //   Cookies.set("authenticated", "false", { expires: 1 });
+                //   Cookies.set("logout", "true", { expires: 1 });
+                //   break;
+                // }
+
+                // FIXED: parseInt so undefined cookie (first disconnect) correctly
+                // starts at 0. Force-logout only after 5 consecutive SIP failures.
+                let disconnectCount: number = parseInt(Cookies.get("logout_count") || "0");
+                disconnectCount++;
+                Cookies.set("logout_count", String(disconnectCount), { expires: 1 });
+                if (disconnectCount >= 5) {
+                  Cookies.set("logout_count", "0", { expires: 1 });
                   Cookies.set("authenticated", "false", { expires: 1 });
                   Cookies.set("logout", "true", { expires: 1 });
                   break;
