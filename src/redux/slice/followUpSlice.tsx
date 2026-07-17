@@ -173,6 +173,10 @@ const followUpSlice = createSlice({
               : val?.lead_details[0]?.phone_number
             : "";
           // val.followUpStatus = val?.is_readed === "0" ? "Past Due" : val?.is_readed === "1" ? "Upcoming" : "Completed";
+          val.campaign_name =
+            val?.lead_details?.[0]?.campaign_details?.[0]?.name ||
+            val?.campaign_details?.[0]?.name ||
+            "-";
           val.followUpStatus = mapIsReadedToLabel(val.is_readed);
           val.followUpText = getDayOrWeek(val.date_time)
         });
@@ -199,6 +203,10 @@ const followUpSlice = createSlice({
               : val?.lead_details[0]?.phone_number
             : "";
             // val.followUpStatus = val?.is_readed === "0" ? "Past Due" : val?.is_readed === "1" ? "Upcoming" : "Completed";
+            val.campaign_name =
+              val?.lead_details?.[0]?.campaign_details?.[0]?.name ||
+              val?.campaign_details?.[0]?.name ||
+              "-";
             val.followUpStatus = mapIsReadedToLabel(val.is_readed);
             val.followUpText = getDayOrWeek(val.date_time)
         });

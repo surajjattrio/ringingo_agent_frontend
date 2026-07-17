@@ -16,6 +16,7 @@ import {
 import { DeleteModal, FollowUpModal } from "@/components/modals";
 import { SEARCH_ERROR_MESSAGE } from "@/config/constant";
 import { followUpStatusOptions, followUpTypeOptions } from "@/config/options";
+import { getCampaign } from "@/redux/slice/campaignSlice";
 import {
     dueFollowUp,
     onAddLeadNoteId,
@@ -60,6 +61,7 @@ const initialValues = {
     },
     type: { key: "type|4", val: "" },
     is_readed: { key: "is_readed|4", val: "" },
+    campaign_uuid: { key: "campaign_uuid", val: "" },
 };
 
 /* ============================== CDR REPORT TABLE ============================== */
@@ -83,12 +85,43 @@ const FollowUpTable = () => {
     const [isEditId, setIsEditId] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<any>("");
     const [isToday, setIsToday] = useState<boolean>(true);
+    const [campaignOptions, setCampaignOptions] = useState<any[]>([]);
+    const [selectedCampaignFilter, setSelectedCampaignFilter] = useState<string>("");
     const [filter, setFilter] = useState<FilterTypes>({
         page: 1,
         limit: 10,
         search: "",
         isAdvance: false,
     });
+    // FETCH CAMPAIGN OPTIONS FOR FILTER DROPDOWN
+    const onGetCampaignOptions = async () => {
+        try {
+            const res: any = await dispatch(getCampaign({ list: "all" })).unwrap();
+            if (res?.statusCode === 200) {
+                const inbound = (res?.data?.inbound_campaign || []).map((x: any) => ({
+                    value: x.uuid,
+                    label: x.name,
+                }));
+                const outbound = (res?.data?.outbound_campaign || []).map((x: any) => ({
+                    value: x.uuid,
+                    label: x.name,
+                }));
+                const blended = (res?.data?.blended_campaign || []).map((x: any) => ({
+                    value: x.uuid,
+                    label: x.name,
+                }));
+                setCampaignOptions([...inbound, ...outbound, ...blended]);
+            }
+        } catch (error: any) {
+            console.log("Get campaign options error ---->", error?.message);
+        }
+    };
+
+    useEffect(() => {
+        onGetCampaignOptions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Fetching User Group Options
     const todayFollow = async () => {
         // alert("coming");
@@ -172,7 +205,8 @@ const FollowUpTable = () => {
             !(
                 data["date_time"]["val"] ||
                 data["type"]["val"] ||
-                data["is_readed"]["val"]
+                data["is_readed"]["val"] ||
+                data["campaign_uuid"]["val"]
             )
         ) {
             Danger(SEARCH_ERROR_MESSAGE);
@@ -189,6 +223,7 @@ const FollowUpTable = () => {
                     : "",
                 [data["type"]["key"]]: data["type"]["val"],
                 [data["is_readed"]["key"]]: data["is_readed"]["val"],
+                [data["campaign_uuid"]["key"]]: data["campaign_uuid"]["val"],
                 // page: filter?.page,
                 // limit: filter?.limit,
             };
@@ -208,6 +243,7 @@ const FollowUpTable = () => {
     // ADVANCE SEARCH Fields Empty & Fetching Conference Data
     const onEmptySearch = () => {
         setFilterOpen(false);
+        setSelectedCampaignFilter("");
         setFilter({ ...filter, page: 1, limit: 10, isAdvance: false });
         setData(initialValues);
     };
@@ -339,6 +375,16 @@ const FollowUpTable = () => {
             sortable: true,
         },
         {
+            name: "comment",
+            title: "Comment",
+            sortable: true,
+        },
+        {
+            name: "campaign_name",
+            title: "Campaign Name",
+            sortable: true,
+        },
+        {
             name: "followUpStatus",
             title: "Status",
             sortable: true,
@@ -439,6 +485,12 @@ const FollowUpTable = () => {
         },
     ];
 
+    const filteredData = (followUpList?.data || []).filter((item: any) => {
+        if (!selectedCampaignFilter) return true;
+        const itemCampaignUuid = item?.lead_details?.[0]?.campaign_uuid || item?.campaign_uuid || "";
+        return itemCampaignUuid === selectedCampaignFilter;
+    });
+
     return (
         <>
             <div className="bg-white py-[7px] px-[3px] pb-[15px] rounded-[10px]">
@@ -468,7 +520,7 @@ const FollowUpTable = () => {
                             });
                         }}
                     >
-                        <div className="grid grid-cols-3 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
+                        <div className="grid grid-cols-4 lg:grid-cols-2 2md:grid-cols-2 md:grid-cols-1 sm:grid-cols-1">
                             <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
                                 <div className="text-xs font-semibold pb-2 flex items-center">
                                     <label htmlFor="date_time">Date</label>
@@ -514,6 +566,25 @@ const FollowUpTable = () => {
                                     isInfo={false}
                                 />
                             </div>
+                            <div className="md:px-2 sm:px-1 sm:pt-1 px-4 pt-3">
+                                <div className="text-xs font-semibold pb-2 flex items-center">
+                                    <label htmlFor="campaign_uuid">Campaign Name</label>
+                                </div>
+                                <Select
+                                    name="campaign_uuid"
+                                    placeholder="Select campaign"
+                                    value={selectedCampaignFilter}
+                                    options={campaignOptions}
+                                    isClearable
+                                    isShowLabel={false}
+                                    isInfo={false}
+                                    onChange={(e: any) => {
+                                        const val = e?.target?.value || "";
+                                        setSelectedCampaignFilter(val);
+                                        setFilter((prev) => ({ ...prev, page: 1 }));
+                                    }}
+                                />
+                            </div>
                         </div>
                     </Head>
                 </div>
@@ -522,9 +593,9 @@ const FollowUpTable = () => {
                         <Table
                             isLoading={isLoading}
                             columns={columns}
-                            data={followUpList?.data}
+                            data={filteredData}
                             page={filter.page}
-                            totalCount={followUpList?.count || 0}
+                            totalCount={selectedCampaignFilter ? filteredData.length : (followUpList?.count || 0)}
                             limit={filter.limit}
                             onPageClick={(page: number) => {
                                 setFilter({
@@ -553,7 +624,7 @@ const FollowUpTable = () => {
                             lastPageClick={() => {
                                 setFilter({
                                     ...filter,
-                                    page: Math.ceil(followUpList?.count / filter.limit),
+                                    page: Math.ceil((selectedCampaignFilter ? filteredData.length : (followUpList?.count || 0)) / filter.limit),
                                 });
                             }}
                         />
