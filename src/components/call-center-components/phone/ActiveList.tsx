@@ -981,7 +981,8 @@ const ActiveList = ({
             </>
           ) : null} */}
         </div>
-        {(!data?.length && !callQueueList?.length || Array.isArray(allLeadsDetails) && allLeadsDetails.length === 0 ) ? (
+        {/* {(!data?.length && !callQueueList?.length || Array.isArray(allLeadsDetails) && allLeadsDetails.length === 0 ) ? ( */}
+         {!data?.length && !callQueueList?.length ? (
           <>{renderDataNotFound()}</>
         ) : (
           <>{renderActiveList()}</>
