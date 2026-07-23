@@ -68,7 +68,7 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
   console.log(allLeadsDetails,'allLeadsDetails')
 
   // ✅ Prevent duplicate API calls
-  const hasFetchedLeads = useRef<string | null>(null);
+  const hasFetchedLeads = useRef(false);
 
   // Get active lead details depending on chat/call
   const currentLeadDetails = useMemo(() => {
@@ -83,13 +83,12 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
     const leadInfoCookie = Cookies.get("lead_information");
 
     if (
+      !hasFetchedLeads.current && // ✅ only once
       selectedCampaign &&
       (campaignMode === "0" || campaignMode === "2") &&
       leadInfoCookie === "0"
     ) {
-      // ✅ We only start fetching/polling if we haven't for this specific campaign
-      if (hasFetchedLeads.current !== selectedCampaign) {
-        hasFetchedLeads.current = selectedCampaign;
+      hasFetchedLeads.current = true; // lock to prevent rerun
       dispatch(
         getAllLeads({
           campaign_uuid: selectedCampaign,
@@ -100,7 +99,6 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
         .catch((err) => {
           console.log("Get lead Info Err--->", err?.message);
         });
-      }
     }
   }, [selectedCampaign, campaignMode, dispatch]);
 
