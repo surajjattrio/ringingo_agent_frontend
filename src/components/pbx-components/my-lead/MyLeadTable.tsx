@@ -213,7 +213,7 @@ const MyLeadTable = () => {
     },
     {
       name: "custom_phone_number",
-      title: "Phone Number",
+      title: "Receiver's Number",
       sortable: true,
       action: (row: any) => {
         return (
@@ -433,7 +433,7 @@ const MyLeadTable = () => {
                 <InputSelect
                   type="number"
                   name="custom_phone_number"
-                  label="Phone Number"
+                  label="Receiver's Number"
                   placeholder="Enter phone number"
                   value={data.custom_phone_number.val}
                   dropdownValue={data.custom_phone_number.dropdown}

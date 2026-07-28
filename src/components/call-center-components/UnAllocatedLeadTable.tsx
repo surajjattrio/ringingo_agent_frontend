@@ -64,7 +64,7 @@ const UnAllocatedLeadTable = () => {
   const leadListDetails = useLeadListDetails();
   const unallocatedLeadListDetails = useUnAllocatedleadDetails();
   console.log("unallocatedLeadListDetails", unallocatedLeadListDetails);
-  
+
   const numberMasking = useNumberMasking();
   const selectedCampaign = useSelectedCampaign();
   const campaignType = useCampaignType();
@@ -88,8 +88,8 @@ const UnAllocatedLeadTable = () => {
     isAdvance: false,
   });
 
-  console.log("isFollowUpData",isFollowUpData);
-  
+  console.log("isFollowUpData", isFollowUpData);
+
   // GET LEAD LIST
   const onGetUnallocatedLeadList = useDebouncedCallback(async () => {
     try {
@@ -184,7 +184,7 @@ const UnAllocatedLeadTable = () => {
     },
     {
       name: "custom_phone_number",
-      title: "Phone Number",
+      title: "Receiver's Number",
       sortable: true,
       action: (row: any) => {
         return (
@@ -243,8 +243,8 @@ const UnAllocatedLeadTable = () => {
       title: "Action",
       sortable: false,
       action: (row: any) => {
-        console.log("rowww",row);
-        
+        console.log("rowww", row);
+
         return (
           <>
             <div className="flex items-center gap-2">
@@ -392,7 +392,7 @@ const UnAllocatedLeadTable = () => {
                 <InputSelect
                   type="number"
                   name="custom_phone_number"
-                  label="Phone Number"
+                  label="Receiver's Number"
                   placeholder="Enter phone number"
                   value={data.custom_phone_number.val}
                   dropdownValue={data.custom_phone_number.dropdown}
@@ -410,13 +410,12 @@ const UnAllocatedLeadTable = () => {
           </Head>
         </div>
         <div
-          className={`${
-            infoData || isCreateLead
+          className={`${infoData || isCreateLead
               ? // grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0
-                // "grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0"
-                "grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0 "
+              // "grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0"
+              "grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0 "
               : ""
-          }`}
+            }`}
         >
           <div className="col-span-2 ">
             <Table
