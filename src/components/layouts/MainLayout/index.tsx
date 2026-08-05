@@ -293,11 +293,60 @@ useEffect(() => {
     }
   };
 
+  const isRetryingBreakEndRef = useRef(false);
+
+  const retryPendingBreakEnd = async (maxRetries = 5, intervalMs = 5000) => {
+    if (isRetryingBreakEndRef.current) return;
+    const pending = Cookies.get("pending_break_end");
+    if (!pending) return;
+
+    isRetryingBreakEndRef.current = true;
+    let pendingData: any = null;
+    try {
+      pendingData = JSON.parse(pending);
+    } catch (e) {
+      console.error("Failed to parse pending break end data:", e);
+      Cookies.remove("pending_break_end");
+      isRetryingBreakEndRef.current = false;
+      return;
+    }
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        let payload = {
+          login_status: "0",
+          breakcode_uuid: pendingData.breakcode_uuid,
+          campaign_uuid: pendingData.campaign_uuid || selectedCampaign,
+          date_time: pendingData.date_time,
+        };
+        await dispatch(agentEntryAdd(payload)).unwrap();
+        !user?.isPbx && (await onUpdateLiveAgentEntry("0"));
+        Cookies.remove("pending_break_end");
+        console.log("Successfully synchronized Break End with backend");
+        break;
+      } catch (err) {
+        console.error(`Retry Break End attempt ${attempt}/${maxRetries} failed:`, err);
+        if (attempt < maxRetries) {
+          await new Promise((res) => setTimeout(res, intervalMs));
+        }
+      }
+    }
+    isRetryingBreakEndRef.current = false;
+  };
+
   const onBackToWork = async () => {
     console.log("Back from Work");
     // await dispatch(
     //   goInBreak({ breakcode_uuid: breakValue, login_status: "0" })
     // ).unwrap();
+    const endDateTime = new Date().toISOString();
+    const pendingPayload = {
+      breakcode_uuid: breakValue?.uuid,
+      campaign_uuid: selectedCampaign,
+      date_time: endDateTime,
+    };
+    Cookies.set("pending_break_end", JSON.stringify(pendingPayload));
+
     setBreakTiming("");
     setBreakValue(undefined);
     setIsOpenConfirmBreak(false);
@@ -309,10 +358,18 @@ useEffect(() => {
       login_status: "0",
       breakcode_uuid: breakValue?.uuid,
       campaign_uuid: selectedCampaign,
+      date_time: endDateTime,
     };
-    let response: any = await dispatch(agentEntryAdd(payload)).unwrap();
 
-    !user?.isPbx && onUpdateLiveAgentEntry("0");
+    try {
+      await dispatch(agentEntryAdd(payload)).unwrap();
+      !user?.isPbx && (await onUpdateLiveAgentEntry("0"));
+      Cookies.remove("pending_break_end");
+    } catch (error) {
+      console.error("Failed to send Break End event immediately, initiating retry queue:", error);
+      retryPendingBreakEnd();
+    }
+
     dispatch(onStatusChange("0"));
     dispatch(onSetUserEntry("login-entry"));
 
@@ -437,9 +494,32 @@ useEffect(() => {
   };
 
   useEffect(() => {
+    const handleOnline = () => {
+      console.log("Network back online, checking pending break end...");
+      if (Cookies.get("pending_break_end")) {
+        retryPendingBreakEnd();
+      }
+    };
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const pendingBreakEnd = Cookies.get("pending_break_end");
+    if (pendingBreakEnd) {
+      retryPendingBreakEnd();
+    }
+
     const savedBreak = Cookies.get("break_data");
     console.log("DEBUG: MainLayout break useEffect triggered. savedBreak =", savedBreak, "user =", user);
     if (savedBreak && user?.agent_detail?.campaign_uuid && !hasRestoredBreakRef.current) {
+      if (isCallActive) {
+        console.log("Agent is active on call; suppressing Break Modal restoration.");
+        return;
+      }
+
       hasRestoredBreakRef.current = true;
       try {
         const breakData = JSON.parse(savedBreak);
@@ -460,7 +540,7 @@ useEffect(() => {
         console.error("Error restoring break:", e);
       }
     }
-  }, [user]);
+  }, [user, isCallActive]);
 
   // useEffect(() => {
   //   const handleBeforeUnload = (event: any) => {
