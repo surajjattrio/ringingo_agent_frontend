@@ -99,13 +99,22 @@ const LeadInformation = (props: LeadInformationProps) => {
 
   /* ============================== LEAD INFORMATION ============================== */
 
+  if (!isLeadInfoID) return null;
+
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      onClick={() => {
+        setIsLeadInfoID(null);
+        setInfoData("");
+        setCdrsNotesData([]);
+      }}
+    >
       <div
-        className={`w-full h-[70vh] overflow-y-auto scrollbar-hide bg-white rounded-[20px] border  transition-all duration-300 ${!isLeadInfoID && "hidden"
-          }`}
+        className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden relative"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="py-4 px-6  flex items-center justify-center sticky top-0 z-10 bg-white">
+        <div className="py-4 px-6 flex items-center justify-center border-b sticky top-0 z-10 bg-white flex-shrink-0">
           <h2 className="text-[#322996] font-semibold text-lg">
             Lead Information
           </h2>
@@ -121,241 +130,243 @@ const LeadInformation = (props: LeadInformationProps) => {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="h-[calc(100vh-233px)] flex items-center justify-center">
-            <Loader />
-          </div>
-        ) : (
-          <>
-            {/* Lead Info */}
-            <div className="pt-2">
-              {infoData && Object.keys(infoData).length ? (
-                <div className="px-4 pb-4">
-                  <div className="grid grid-cols-1 gap-y-2 text-sm">
-                    {[
-                      { label: "Email id", value: infoData?.email || "—" },
-                      {
-                        label: "Phone No",
-                        value: infoData?.phone_number
-                          ? user?.isPbx
-                            ? user?.isNumberMasking
-                              ? Array.from(infoData?.phone_number).length > 4
-                                ? Array.from(infoData?.phone_number)
-                                  .fill("X", 2, -2)
-                                  .join("")
-                                : Array.from(infoData?.phone_number)
-                                  .fill("X", 1, -1)
-                                  .join("")
-                              : infoData?.phone_number
-                            : numberMasking
-                              ? Array.from(infoData?.phone_number).length > 4
-                                ? Array.from(infoData?.phone_number)
-                                  .fill("X", 2, -2)
-                                  .join("")
-                                : Array.from(infoData?.phone_number)
-                                  .fill("X", 1, -1)
-                                  .join("")
-                              : infoData?.phone_number
-                          : "—",
-                      },
-                      {
-                        label: "Alternate Phone No",
-                        value: infoData?.alternate_phone_number || "—",
-                      },
-                      {
-                        label: "DOB",
-                        value: infoData?.dob
-                          ? format(new Date(infoData?.dob), "MM/dd/yyyy")
-                          : "—",
-                      },
-                      {
-                        label: "Description",
-                        value: infoData?.description || "—",
-                      },
-                      {
-                        label: "Lead Status",
-                        value: infoData?.disposition?.[0]?.name || "—",
-                      },
-                      { label: "Address", value: infoData?.address || "—" },
-                      { label: "City", value: infoData?.city || "—" },
-                      { label: "State", value: infoData?.state || "—" },
-                      { label: "Province", value: infoData?.province || "—" },
-                      {
-                        label: "Postal Code",
-                        value: infoData?.postal_code || "—",
-                      },
-                      {
-                        label: "Country",
-                        value:
-                          infoData?.country && infoData?.country?.length
-                            ? infoData?.country[0]?.country
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading ? (
+            <div className="h-[200px] flex items-center justify-center">
+              <Loader />
+            </div>
+          ) : (
+            <>
+              {/* Lead Info */}
+              <div className="pt-2">
+                {infoData && Object.keys(infoData).length ? (
+                  <div className="px-4 pb-4">
+                    <div className="grid grid-cols-1 gap-y-2 text-sm">
+                      {[
+                        { label: "Email id", value: infoData?.email || "—" },
+                        {
+                          label: "Phone No",
+                          value: infoData?.phone_number
+                            ? user?.isPbx
+                              ? user?.isNumberMasking
+                                ? Array.from(infoData?.phone_number).length > 4
+                                  ? Array.from(infoData?.phone_number)
+                                    .fill("X", 2, -2)
+                                    .join("")
+                                  : Array.from(infoData?.phone_number)
+                                    .fill("X", 1, -1)
+                                    .join("")
+                                : infoData?.phone_number
+                              : numberMasking
+                                ? Array.from(infoData?.phone_number).length > 4
+                                  ? Array.from(infoData?.phone_number)
+                                    .fill("X", 2, -2)
+                                    .join("")
+                                  : Array.from(infoData?.phone_number)
+                                    .fill("X", 1, -1)
+                                    .join("")
+                                : infoData?.phone_number
                             : "—",
-                      },
-                    ].map((item, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-[150px_1fr] border-b rounded-lg py-2 px-2"
-                      >
-                        <div className="text-gray-500 text-sm">
-                          {item.label}
-                        </div>
-                        <div className="font-medium pl-8">{item.value}</div>
-                      </div>
-                    ))}
-                    {customFieldItems.length > 0 &&
-                      customFieldItems.map((item: any, index: number) => (
+                        },
+                        {
+                          label: "Alternate Phone No",
+                          value: infoData?.alternate_phone_number || "—",
+                        },
+                        {
+                          label: "DOB",
+                          value: infoData?.dob
+                            ? format(new Date(infoData?.dob), "MM/dd/yyyy")
+                            : "—",
+                        },
+                        {
+                          label: "Description",
+                          value: infoData?.description || "—",
+                        },
+                        {
+                          label: "Lead Status",
+                          value: infoData?.disposition?.[0]?.name || "—",
+                        },
+                        { label: "Address", value: infoData?.address || "—" },
+                        { label: "City", value: infoData?.city || "—" },
+                        { label: "State", value: infoData?.state || "—" },
+                        { label: "Province", value: infoData?.province || "—" },
+                        {
+                          label: "Postal Code",
+                          value: infoData?.postal_code || "—",
+                        },
+                        {
+                          label: "Country",
+                          value:
+                            infoData?.country && infoData?.country?.length
+                              ? infoData?.country[0]?.country
+                              : "—",
+                        },
+                      ].map((item, index) => (
                         <div
-                          key={`custom-${index}`}
+                          key={index}
                           className="grid grid-cols-[150px_1fr] border-b rounded-lg py-2 px-2"
                         >
-                          <div className="text-gray-500 text-sm">{item.label}</div>
+                          <div className="text-gray-500 text-sm">
+                            {item.label}
+                          </div>
                           <div className="font-medium pl-8">{item.value}</div>
                         </div>
                       ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div>
-              {cdrsNotesData && cdrsNotesData?.length
-                ? cdrsNotesData?.map((value: any, index: number) => {
-                  return (
-                    <div
-                      className={`border-b border-dark-800 ${index === 0 ? "3xl:pb-2 pb-1" : "3xl:py-2 py-1"
-                        }`}
-                      key={index}
-                    >
-                      <div className="flex items-center justify-between 3xl:px-6 px-4">
-                        <div className="flex flex-col items-start">
-                          <div className="flex items-center gap-2">
-                            <div className="relative 3xl:w-[20px] 3xl:h-[20px] w-[16px] h-[16px] cursor-pointer">
-                              <Legacy
-                                src={
-                                  value?.cdrs_info?.direction === "missed"
-                                    ? call_missed
-                                    : value?.cdrs_info?.direction ===
-                                      "outbound"
-                                      ? call_outbound
-                                      : call_inbond
-                                }
-                                alt="direction"
-                                layout="fill"
-                              />
-                            </div>
-                            <label className="text-xs text-heading font-semibold">
-                              {value?.cdrs_info?.callstart
-                                ? getInfoDay(value?.cdrs_info?.converted_date)
-                                : getInfoDay(value?.cdrs_info?.callstart)}
-                            </label>
-                            <label className="text-xs text-heading font-semibold">
-                              {value?.cdrs_info?.callstart
-                                ? format(new Date(value?.cdrs_info?.converted_date), "h:mm:ss a")
-                                : format(new Date(value?.cdrs_info?.callstart), "h:mm:ss a")
-                              }
-                            </label>
-                            <label className="text-xs text-heading font-semibold">
-                              {value?.cdrs_info?.billsecond
-                                ? getDuration(value?.cdrs_info?.billsecond)
-                                : ""}
-                            </label>
-                          </div>
-                        </div>
-                        <div>
+                      {customFieldItems.length > 0 &&
+                        customFieldItems.map((item: any, index: number) => (
                           <div
-                            className="cursor-pointer"
-                            onClick={() =>
-                              setNoteData(value?.cdrs_info?.custom_callid)
-                            }
+                            key={`custom-${index}`}
+                            className="grid grid-cols-[150px_1fr] border-b rounded-lg py-2 px-2"
                           >
-                            <div className="relative 3xl:w-[22px] 3xl:h-[22px] w-[18px] h-[18px]">
-                              <Legacy
-                                src={add_note}
-                                alt="add-note"
-                                layout="fill"
-                              />
+                            <div className="text-gray-500 text-sm">{item.label}</div>
+                            <div className="font-medium pl-8">{item.value}</div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                {cdrsNotesData && cdrsNotesData?.length
+                  ? cdrsNotesData?.map((value: any, index: number) => {
+                    return (
+                      <div
+                        className={`border-b border-dark-800 ${index === 0 ? "3xl:pb-2 pb-1" : "3xl:py-2 py-1"
+                          }`}
+                        key={index}
+                      >
+                        <div className="flex items-center justify-between 3xl:px-6 px-4">
+                          <div className="flex flex-col items-start">
+                            <div className="flex items-center gap-2">
+                              <div className="relative 3xl:w-[20px] 3xl:h-[20px] w-[16px] h-[16px] cursor-pointer">
+                                <Legacy
+                                  src={
+                                    value?.cdrs_info?.direction === "missed"
+                                      ? call_missed
+                                      : value?.cdrs_info?.direction ===
+                                        "outbound"
+                                        ? call_outbound
+                                        : call_inbond
+                                  }
+                                  alt="direction"
+                                  layout="fill"
+                                />
+                              </div>
+                              <label className="text-xs text-heading font-semibold">
+                                {value?.cdrs_info?.callstart
+                                  ? getInfoDay(value?.cdrs_info?.converted_date)
+                                  : getInfoDay(value?.cdrs_info?.callstart)}
+                              </label>
+                              <label className="text-xs text-heading font-semibold">
+                                {value?.cdrs_info?.callstart
+                                  ? format(new Date(value?.cdrs_info?.converted_date), "h:mm:ss a")
+                                  : format(new Date(value?.cdrs_info?.callstart), "h:mm:ss a")
+                                }
+                              </label>
+                              <label className="text-xs text-heading font-semibold">
+                                {value?.cdrs_info?.billsecond
+                                  ? getDuration(value?.cdrs_info?.billsecond)
+                                  : ""}
+                              </label>
+                            </div>
+                          </div>
+                          <div>
+                            <div
+                              className="cursor-pointer"
+                              onClick={() =>
+                                setNoteData(value?.cdrs_info?.custom_callid)
+                              }
+                            >
+                              <div className="relative 3xl:w-[22px] 3xl:h-[22px] w-[18px] h-[18px]">
+                                <Legacy
+                                  src={add_note}
+                                  alt="add-note"
+                                  layout="fill"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div>
-                        {value?.notes_info.length
-                          ? value?.notes_info.map(
-                            (val: any, index: number, array: any) => {
-                              return (
-                                <div
-                                  key={index}
-                                  className={`3xl:px-6 px-4 border-b border-dark-800 ${index === 0
-                                      ? "3xl:pb-2 pb-1"
-                                      : "3xl:py-2 py-1"
-                                    } ${index === array.length - 1
-                                      ? "border-b-0"
-                                      : ""
-                                    }`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 max-w-[50%] w-full">
-                                      <div className="relative 3xl:w-[20px] 3xl:h-[20px] w-[16px] h-[16px] cursor-pointer max-w-[unset]">
-                                        <Legacy
-                                          src={doc}
-                                          alt="doc"
-                                          layout="fill"
-                                        />
+                        <div>
+                          {value?.notes_info.length
+                            ? value?.notes_info.map(
+                              (val: any, index: number, array: any) => {
+                                return (
+                                  <div
+                                    key={index}
+                                    className={`3xl:px-6 px-4 border-b border-dark-800 ${index === 0
+                                        ? "3xl:pb-2 pb-1"
+                                        : "3xl:py-2 py-1"
+                                      } ${index === array.length - 1
+                                        ? "border-b-0"
+                                        : ""
+                                      }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2 max-w-[50%] w-full">
+                                        <div className="relative 3xl:w-[20px] 3xl:h-[20px] w-[16px] h-[16px] cursor-pointer max-w-[unset]">
+                                          <Legacy
+                                            src={doc}
+                                            alt="doc"
+                                            layout="fill"
+                                          />
+                                        </div>
+                                        <span className="text-[13px] text-heading w-[80%] whitespace-nowrap text-ellipsis overflow-hidden">
+                                          {val?.user && val?.user?.length
+                                            ? val?.user[0]?.username
+                                            : infoData?.tenant &&
+                                              infoData?.tenant?.length
+                                              ? infoData?.tenant[0]?.tenant_name
+                                              : ""}
+                                        </span>
                                       </div>
-                                      <span className="text-[13px] text-heading w-[80%] whitespace-nowrap text-ellipsis overflow-hidden">
-                                        {val?.user && val?.user?.length
-                                          ? val?.user[0]?.username
-                                          : infoData?.tenant &&
-                                            infoData?.tenant?.length
-                                            ? infoData?.tenant[0]?.tenant_name
+                                      <div className="flex items-center gap-2 justify-end">
+                                        <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
+                                          {val?.createdAt
+                                            ? getDay(val?.createdAt)
                                             : ""}
-                                      </span>
+                                        </span>
+                                        <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
+                                          {val?.createdAt
+                                            ? format(
+                                              new Date(val?.createdAt),
+                                              "dd/MM/yyyy"
+                                            )
+                                            : ""}
+                                        </span>
+                                        <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
+                                          {val?.createdAt
+                                            ? format(
+                                              new Date(val?.createdAt),
+                                              "h:mm a"
+                                            )
+                                            : ""}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-2 justify-end">
-                                      <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
-                                        {val?.createdAt
-                                          ? getDay(val?.createdAt)
-                                          : ""}
-                                      </span>
-                                      <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
-                                        {val?.createdAt
-                                          ? format(
-                                            new Date(val?.createdAt),
-                                            "dd/MM/yyyy"
-                                          )
-                                          : ""}
-                                      </span>
-                                      <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
-                                        {val?.createdAt
-                                          ? format(
-                                            new Date(val?.createdAt),
-                                            "h:mm a"
-                                          )
-                                          : ""}
-                                      </span>
+                                    <div className="3xl:pl-8 pl-7">
+                                      <p className="3xl:text-xs text-[11px] font-normal text-txt-primary break-words">
+                                        {val.comment}
+                                      </p>
                                     </div>
                                   </div>
-                                  <div className="3xl:pl-8 pl-7">
-                                    <p className="3xl:text-xs text-[11px] font-normal text-txt-primary break-words">
-                                      {val.comment}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            }
-                          )
-                          : null}
+                                );
+                              }
+                            )
+                            : null}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
-                : null}
-            </div>
-          </>
-        )}
+                    );
+                  })
+                  : null}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

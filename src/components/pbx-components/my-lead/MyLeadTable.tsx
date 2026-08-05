@@ -469,90 +469,79 @@ const MyLeadTable = () => {
             </div>
           </Head>
         </div>
-        <div
-          className={`${infoData || isCreateLead
-            ? // grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0
-            // "grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0"
-            "grid grid-cols-3 gap-4 tsm:grid-cols-1 tsm:gap-y-4 tsm:gap-x-0 "
-            : ""
-            }`}
-        >
-          <div className="col-span-2 ">
-            <Table
-              isLoading={isLoading}
-              columns={columns}
-              data={leadListDetails?.data}
-              page={filter.page}
-              totalCount={leadListDetails?.count || 0}
-              limit={filter.limit}
-              title="Lead"
-              onCreateButtonClick={() => {
-                if (!user?.isPbx && !selectedCampaign) {
-                  Danger("You are not able to create without any campaign");
-                } else {
-                  setEditLead(false);
-                  setEditData(null);
-                  setInfoData("");
-                  setIsCreateLead(true);
-                }
-              }}
-              onPageClick={(page: number) => {
-                setFilter({
-                  ...filter,
-                  page,
-                });
-              }}
-              onLimitChange={(limit: number) => {
-                setFilter({
-                  ...filter,
-                  limit,
-                  page: 1,
-                });
-              }}
-              onRefreshClick={() => {
-                setFilter({
-                  ...filter,
-                });
-              }}
-              firstPageClick={() => {
-                setFilter({
-                  ...filter,
-                  page: 1,
-                });
-              }}
-              lastPageClick={() => {
-                setFilter({
-                  ...filter,
-                  page: Math.ceil(leadListDetails?.count / filter.limit),
-                });
-              }}
-            />
-          </div>
-          <div className="col-span-1 mr-3 ">
-            {isCreateLead ? (
-              <CreateLead
-                leadEdit={editLead}
-                setEditLead={setEditLead}
-                setIsCreateLead={setIsCreateLead}
-                editData={editData}
-                setEditData={setEditData}
-                fromList
-              />
-            ) : noteData ? (
-              <LeadNote
-                noteData={noteData}
-                setNoteData={setNoteData}
-                leadUuid={leadUuid}
-              />
-            ) : infoData ? (
-              <LeadInformation
-                isLeadInfoID={infoData}
-                setIsLeadInfoID={setInfoData}
-                setNoteData={setNoteData}
-              />
-            ) : null}
-          </div>
+        <div>
+          <Table
+            isLoading={isLoading}
+            columns={columns}
+            data={leadListDetails?.data}
+            page={filter.page}
+            totalCount={leadListDetails?.count || 0}
+            limit={filter.limit}
+            title="Lead"
+            onCreateButtonClick={() => {
+              if (!user?.isPbx && !selectedCampaign) {
+                Danger("You are not able to create without any campaign");
+              } else {
+                setEditLead(false);
+                setEditData(null);
+                setInfoData("");
+                setIsCreateLead(true);
+              }
+            }}
+            onPageClick={(page: number) => {
+              setFilter({
+                ...filter,
+                page,
+              });
+            }}
+            onLimitChange={(limit: number) => {
+              setFilter({
+                ...filter,
+                limit,
+                page: 1,
+              });
+            }}
+            onRefreshClick={() => {
+              setFilter({
+                ...filter,
+              });
+            }}
+            firstPageClick={() => {
+              setFilter({
+                ...filter,
+                page: 1,
+              });
+            }}
+            lastPageClick={() => {
+              setFilter({
+                ...filter,
+                page: Math.ceil(leadListDetails?.count / filter.limit),
+              });
+            }}
+          />
         </div>
+        {isCreateLead ? (
+          <CreateLead
+            leadEdit={editLead}
+            setEditLead={setEditLead}
+            setIsCreateLead={setIsCreateLead}
+            editData={editData}
+            setEditData={setEditData}
+            fromList
+          />
+        ) : noteData ? (
+          <LeadNote
+            noteData={noteData}
+            setNoteData={setNoteData}
+            leadUuid={leadUuid}
+          />
+        ) : infoData ? (
+          <LeadInformation
+            isLeadInfoID={infoData}
+            setIsLeadInfoID={setInfoData}
+            setNoteData={setNoteData}
+          />
+        ) : null}
 
         <NoteModel
           visible={!!isNoteData}

@@ -271,63 +271,53 @@ const LoginLogoutReportTable = () => {
           </div>
         </Head>
       </div>
-      <div
-        className={`${
-          isInfoDate
-            ? "grid grid-cols-3 gap-4 smd:grid-cols-1 smd:gap-y-4 smd:gap-x-0"
-            : ""
-        }`}
-      >
-        <div className="col-span-2">
-          <Table
-            isLoading={isLoading}
-            columns={columns}
-            data={loginLogoutList?.data}
-            page={filter.page}
-            totalCount={loginLogoutList?.count || 0}
-            limit={filter.limit}
-            onPageClick={(page: number) => {
-              setFilter({
-                ...filter,
-                page,
-              });
-            }}
-            onLimitChange={(limit: number) => {
-              setFilter({
-                ...filter,
-                limit,
-                page: 1,
-              });
-            }}
-            onRefreshClick={() => {
-              setFilter({
-                ...filter,
-              });
-            }}
-            firstPageClick={() => {
-              setFilter({
-                ...filter,
-                page: 1,
-              });
-            }}
-            lastPageClick={() => {
-              setFilter({
-                ...filter,
-                page: Math.ceil(loginLogoutList?.count / filter.limit),
-              });
+      <div>
+        <Table
+          isLoading={isLoading}
+          columns={columns}
+          data={loginLogoutList?.data}
+          page={filter.page}
+          totalCount={loginLogoutList?.count || 0}
+          limit={filter.limit}
+          onPageClick={(page: number) => {
+            setFilter({
+              ...filter,
+              page,
+            });
+          }}
+          onLimitChange={(limit: number) => {
+            setFilter({
+              ...filter,
+              limit,
+              page: 1,
+            });
+          }}
+          onRefreshClick={() => {
+            setFilter({
+              ...filter,
+            });
+          }}
+          firstPageClick={() => {
+            setFilter({
+              ...filter,
+              page: 1,
+            });
+          }}
+          lastPageClick={() => {
+            setFilter({
+              ...filter,
+              page: Math.ceil(loginLogoutList?.count / filter.limit),
+            });
+          }}
+        />
+        {isInfoDate && (
+          <LoginLogoutReportInformation
+            isInfoDate={isInfoDate}
+            onCloseClick={() => {
+              setInfoDate(null);
             }}
           />
-        </div>
-        {isInfoDate ? (
-          <div className="col-span-1">
-            <LoginLogoutReportInformation
-              isInfoDate={isInfoDate}
-              onCloseClick={() => {
-                setInfoDate(null);
-              }}
-            />
-          </div>
-        ) : null}
+        )}
       </div>
     </>
   );

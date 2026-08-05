@@ -421,57 +421,82 @@ const CreateLead = (props: CreateLeadProps) => {
 
   return (
     <>
-      <div className="w-full bg-gray-50">
+      <div
+        className={
+          fromList
+            ? "fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+            : "w-full bg-gray-50"
+        }
+        onClick={
+          fromList
+            ? () => {
+                setIsCreateLead(false);
+                resetForm();
+                setEditData && setEditData(null);
+                setEditLead && setEditLead(false);
+              }
+            : undefined
+        }
+      >
         <div
-          className={`${sectionName === "dashboard"
-              ? ""
-              : "rounded-lg border max-h-[70vh] overflow-y-auto scrollbar-hide"
-            }`}
-        // overflow-y-auto scrollbar-hide
+          className={
+            fromList
+              ? "bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden relative"
+              : `${
+                  sectionName === "dashboard"
+                    ? ""
+                    : "rounded-lg border max-h-[70vh] overflow-y-auto scrollbar-hide"
+                }`
+          }
+          onClick={fromList ? (e) => e.stopPropagation() : undefined}
         >
           <div
-            className={`py-3 px-4 bg-white rounded-t-lg d-flex justify-between items-center sticky top-0 z-[9999]  ${sectionName === "dashboard" ? "" : "rounded-t-lg"
-              } `}
+            className={`py-3.5 px-6 bg-white flex items-center justify-between sticky top-0 z-[9999] border-b flex-shrink-0 ${
+              sectionName === "dashboard" ? "" : "rounded-t-lg"
+            }`}
           >
             {fromCallCenter ? (
               <span className="text-lg text-gray-800 font-semibold">
                 Lead Information
               </span>
             ) : (
-              <div className="relative flex items-center justify-center">
+              <div className="w-full flex items-center justify-center relative">
                 <span className="text-[#322996] font-semibold text-lg">
                   {leadEdit ? "Edit Lead" : "Create Lead"}
                 </span>
                 <div
-                  className="absolute right-0 h-[14px] w-[14px] 3xl:w-[16px] 3xl:h-[16px] cursor-pointer  
-      hover:opacity-80 transition-opacity"
+                  className="absolute right-0 h-[16px] w-[16px] cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    setIsCreateLead(false);
+                    resetForm();
+                    setEditData && setEditData(null);
+                    setEditLead && setEditLead(false);
+                  }}
                 >
                   <Legacy
                     src={fromList ? closeIcon : backIcon}
                     alt={fromList ? "close" : "back"}
                     layout="fill"
-                    onClick={() => {
-                      setIsCreateLead(false);
-                      resetForm();
-                      setEditData(null);
-                      setEditLead(false);
-                    }}
                   />
                 </div>
               </div>
             )}
           </div>
           <div
-            className={`pt-3 bg-white rounded-b-lg ${sectionName === "dashboard"
-                ? "h-[36.2vh] overflow-y-auto scrollbar-hide"
-                : ""
-              }`}
+            className={`bg-white rounded-b-lg ${
+              fromList
+                ? "flex-1 overflow-y-auto p-4 pt-3"
+                : sectionName === "dashboard"
+                ? "h-[36.2vh] overflow-y-auto scrollbar-hide pt-3"
+                : "pt-3"
+            }`}
           >
             <div
-              className={`${sectionName === "dashboard"
+              className={`${
+                sectionName === "dashboard" || fromList
                   ? ""
                   : "min-h-[calc(100vh-230px)] 3xl:min-h-[calc(100vh-270px)]"
-                }`}
+              }`}
             >
               <form onSubmit={handleSubmit} className="max-w-7xl mx-auto px-3">
                 <div

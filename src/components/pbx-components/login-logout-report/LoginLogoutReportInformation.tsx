@@ -26,12 +26,15 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
   const [data, setData] = useState<any>([]);
 
   useEffect(() => {
-    onGetInfo();
+    if (isInfoDate) {
+      onGetInfo();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInfoDate]);
 
   // ON GETTING INFO
   const onGetInfo = async () => {
+    if (!isInfoDate) return;
     setIsLoading(true);
     try {
       let payload = {
@@ -63,6 +66,18 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
       return `${rowData.breakcode[0].name} Started`;
     } else if (rowData.login_status === "2") {
       return "Logout";
+    }
+  };
+
+  const getSubEventStatus = (rowData: any) => {
+    if (rowData.login_status === "3") {
+      return "Pause End";
+    } else if (rowData.login_status === "4") {
+      return "Pause Start";
+    } else if (rowData.login_status === "5") {
+      return "ACW Start";
+    } else if (rowData.login_status === "6") {
+      return "ACW End";
     }
   };
 
@@ -102,17 +117,35 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
     } else if (rowData.login_status === "2") {
       const duration = getDuration(data[0]?.date_time, rowData?.date_time);
       return <span className="text-heading">{duration}</span>;
+    } else if (rowData.login_status === "3") {
+      for (let i = index - 1; i >= 0; i--) {
+        if (data[i].login_status === "4") {
+          const duration = getDuration(data[i].date_time, rowData.date_time);
+          return <span className="text-heading">{duration}</span>;
+        }
+      }
+    } else if (rowData.login_status === "6") {
+      for (let i = index - 1; i >= 0; i--) {
+        if (data[i].login_status === "5") {
+          const duration = getDuration(data[i].date_time, rowData.date_time);
+          return <span className="text-heading">{duration}</span>;
+        }
+      }
     }
   };
 
+  if (!isInfoDate) return null;
+
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      onClick={onCloseClick}
+    >
       <div
-        className={`w-full scrollbar-hide h-[calc(100vh-156px)] 3xl:h-[calc(100vh-184px)] overflow-y-auto drop-shadow-xl bg-white rounded-lg ${
-          !isInfoDate && "hidden"
-        }`}
+        className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden relative"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="3xl:py-2 py-1.5 bg-dark-800 3xl:px-4 px-3 rounded-t-lg sticky top-0 z-[5]">
+        <div className="3xl:py-2 py-1.5 bg-dark-800 3xl:px-4 px-3 rounded-t-lg sticky top-0 z-[5] flex-shrink-0">
           <div className="flex-row-reverse justify-between flex items-center">
             <div className="relative h-[14px] w-[14px] 3xl:w-[16px] 3xl:h-[16px] cursor-pointer mr-2">
               <Legacy
@@ -123,18 +156,18 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
               />
             </div>
             <span className="3xl:text-sm text-xs text-heading font-bold">
-            Detailed Activity
+              Detailed Activity
             </span>
           </div>
         </div>
-        <div>
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
           {isLoading ? (
-            <div className=" h-[calc(100vh-233px)]">
+            <div className="h-[200px] flex items-center justify-center">
               <Loader />
             </div>
           ) : data && data?.length ? (
-            <div className="px-4 pb-4">
-              <div className="grid grid-cols-3 gap-x-1">
+            <div className="pb-4">
+              <div className="grid grid-cols-4 gap-x-1 border-b pt-4 pb-2 mb-2 sticky top-0 bg-white z-10">
                 <div className="p-[5px] text-sm font-bold text-heading">
                   Time Stamp
                 </div>
@@ -142,10 +175,13 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
                   Event
                 </div>
                 <div className="p-[5px] text-sm font-bold text-heading">
+                  Sub Event
+                </div>
+                <div className="p-[5px] text-sm font-bold text-heading">
                   Duration(HH:MM)
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-x-1">
+              <div className="grid grid-cols-4 gap-x-1">
                 {data.map((data: any, index: number) => {
                   return (
                     <>
@@ -162,6 +198,11 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
                         </span>
                       </div>
                       <div className="p-[10px]">
+                        <span className="3xl:text-xs text-[11px] text-heading">
+                          {getSubEventStatus(data)}
+                        </span>
+                      </div>
+                      <div className="p-[10px]">
                         <span className="3xl:text-xs text-[11px]">
                           {getEventDuration(data, index)}
                         </span>
@@ -172,13 +213,13 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
               </div>
             </div>
           ) : (
-            <div className=" h-[calc(100vh-233px)] flex justify-center items-center">
+            <div className="h-[200px] flex justify-center items-center">
               <Chip title="No Record found" />
             </div>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
