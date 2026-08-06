@@ -82,26 +82,34 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
   };
 
   const getDuration = (startDate: any, endDate: any) => {
-    let newTime: any = intervalToDuration({
-      start: new Date(startDate),
-      end: new Date(endDate),
-    });
-    return `${
-      (newTime?.hours > 9 ? newTime.hours : "0" + newTime.hours) +
-      ":" +
-      (newTime?.minutes > 9 ? newTime.minutes : "0" + newTime.minutes)
-    }`;
+    if (!startDate || !endDate) return "00:00:00";
+    try {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return "00:00:00";
+      let newTime: any = intervalToDuration({
+        start: s,
+        end: e,
+      });
+      const hours = newTime?.hours || 0;
+      const minutes = newTime?.minutes || 0;
+      const seconds = newTime?.seconds || 0;
+      return `${hours > 9 ? hours : "0" + hours}:${minutes > 9 ? minutes : "0" + minutes}:${seconds > 9 ? seconds : "0" + seconds}`;
+    } catch {
+      return "00:00:00";
+    }
   };
 
   const isDurationOver = (duration: string, breakCode: any) => {
+    if (!breakCode?.duration) return "success";
     return duration > breakCode.duration ? "error" : "success";
   };
 
   const getEventDuration = (rowData: any, index: number) => {
     if (
-      data[index - 1] &&
-      rowData.login_status === "0" &&
-      rowData.breakcode?.length
+      data?.[index - 1] &&
+      rowData?.login_status === "0" &&
+      rowData?.breakcode?.length
     ) {
       const duration = getDuration(
         data[index - 1]?.date_time,
@@ -114,20 +122,22 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
           {duration}
         </span>
       );
-    } else if (rowData.login_status === "2") {
-      const duration = getDuration(data[0]?.date_time, rowData?.date_time);
+    } else if (rowData?.login_status === "2") {
+      const firstLogin = data?.find((d: any) => d?.login_status === "0" && !d?.breakcode?.length);
+      const startTime = firstLogin ? firstLogin.date_time : data?.[0]?.date_time;
+      const duration = getDuration(startTime, rowData?.date_time);
       return <span className="text-heading">{duration}</span>;
-    } else if (rowData.login_status === "3") {
+    } else if (rowData?.login_status === "3") {
       for (let i = index - 1; i >= 0; i--) {
-        if (data[i].login_status === "4") {
-          const duration = getDuration(data[i].date_time, rowData.date_time);
+        if (data?.[i]?.login_status === "4") {
+          const duration = getDuration(data[i]?.date_time, rowData?.date_time);
           return <span className="text-heading">{duration}</span>;
         }
       }
-    } else if (rowData.login_status === "6") {
+    } else if (rowData?.login_status === "6") {
       for (let i = index - 1; i >= 0; i--) {
-        if (data[i].login_status === "5") {
-          const duration = getDuration(data[i].date_time, rowData.date_time);
+        if (data?.[i]?.login_status === "5") {
+          const duration = getDuration(data[i]?.date_time, rowData?.date_time);
           return <span className="text-heading">{duration}</span>;
         }
       }
@@ -178,7 +188,7 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
                   Sub Event
                 </div>
                 <div className="p-[5px] text-sm font-bold text-heading">
-                  Duration(HH:MM)
+                  Duration (HH:MM:SS)
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-x-1">
@@ -187,7 +197,7 @@ const LoginLogoutReportInformation = (props: LoginLogoutReportInformation) => {
                     <>
                       <div className="p-[10px]">
                         <span className="3xl:text-xs text-[11px] text-heading">
-                          {data.date_time
+                          {data.date_time && !isNaN(new Date(data.date_time).getTime())
                             ? format(new Date(data.date_time), "HH:mm")
                             : ""}
                         </span>

@@ -337,12 +337,10 @@ const LeadInformation = (props: LeadInformationProps) => {
                                             : ""}
                                         </span>
                                         <span className="3xl:text-xs text-[11px] font-normal text-txt-primary">
-                                          {val?.createdAt
-                                            ? format(
-                                              new Date(val?.createdAt),
-                                              "h:mm a"
-                                            )
-                                            : ""}
+                                          {value?.cdrs_info?.callstart
+                                            ? format(new Date(value?.cdrs_info?.converted_date), "h:mm:ss a")
+                                            : format(new Date(value?.cdrs_info?.callstart), "h:mm:ss a")
+                                          }
                                         </span>
                                       </div>
                                     </div>

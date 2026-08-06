@@ -63,7 +63,7 @@ const LeadNote = (props: LeadNoteProps) => {
                 : day + " ago"
             }`,
           date: format(new Date(val?.createdAt), "dd/MM/yyyy"),
-          time: format(new Date(val?.createdAt), "h:mm a"),
+          time: format(new Date(val?.createdAt), "h:mm:ss a"),
           name: val?.user[0]?.username,
         };
       });
