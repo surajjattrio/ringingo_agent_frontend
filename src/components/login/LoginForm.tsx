@@ -91,23 +91,25 @@ const LoginForm = () => {
     }
   };
   const forceLogin = async (data: any) => {
-    setIsLoading(true)
+    setIsLoading(true);
+    setErrorMsg(data);
     const currentDomain = values?.company_code ? `${values?.company_code}.ringingo.com`.toLowerCase() : domain;
 
     try {
       const res: any = await apiInstance.post(
         FORCE_LOGIN,
-        { username: values?.username, domain: currentDomain }
+        { username: values?.username, password: values?.password, domain: currentDomain }
       );
       if (res && res?.statusCode === 200) {
         if (res?.message?.force_login === "0") {
-          setShowForceLogout(true)
+          setShowForceLogout(true);
         } else {
-          Danger(data)
+          Danger(data);
         }
-        setIsLoading(false)
+        setIsLoading(false);
       }
     } catch (error: any) {
+      setIsLoading(false);
       Danger(error?.response?.data?.message);
     }
   };
@@ -392,7 +394,7 @@ const LoginForm = () => {
 
       console.log(res);
 
-      if (res && res.data.access_token) {
+      if (res.data?.access_token) {
         if (values.rememberMe) {
           Cookies.set("rememberMe", "true", { expires: 7 });
           Cookies.set("username", values.username, { expires: 7 });
@@ -430,7 +432,7 @@ const LoginForm = () => {
         setIsLoading(false);
         forceLogin(res?.data?.data)
       } else {
-        Danger(res?.data?.data);
+        // Danger(res?.data?.data);
         setIsLoading(false);
       }
     } catch (e: any) {
