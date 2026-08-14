@@ -4,6 +4,7 @@ import Legacy from "next/legacy/image";
 
 // PROJECT IMPORTS
 import { useAppDispatch } from "@/redux/hooks";
+import { useAuth } from "@/contexts/hooks/useAuth";
 import {
   onAddLeadNoteId,
   useAddLeadNoteId,
@@ -30,9 +31,13 @@ import {
 } from "@/redux/slice/chatSlice";
 import Search from "@/components/pbx-components/phone/Search";
 import { truncateName } from "@/components/helperFunctions";
-
+import { BotLeadInfoModal } from "../../modals";
+import { getBotLeadInfo } from "@/redux/services/xenyAiService";
+import getDomain from "@/utils/GetDoamin";
+import { Danger } from "@/redux/services/toasterService";
 // THIRD-PARTY IMPORT
 import Cookies from "js-cookie";
+import { Pencil } from "lucide-react";
 
 // ASSETS
 const editIcon = "/assets/icons/edit.svg";
@@ -60,9 +65,17 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
   const chatModeType = useChatMode();
   const isActiveChat = useIsActiveChat();
   const leadInfo = useLeadInfo();
+  const { user } = useAuth();
+  const hasBotLeadInfoPermission =
+    user?.permission?.bot_lead_info === "0" ||
+    (user as any)?.agent_detail?.agent_permission?.[0]?.bot_lead_info === "0";
 
   const [data, setData] = useState<any>(null);
   const [editLead, setEditLead] = useState(false);
+  const [showBotModal, setShowBotModal] = useState(false);
+  const [botData, setBotData] = useState<any>(null);
+  const [isBotLoading, setIsBotLoading] = useState(false);
+
   console.log("datadatadatadata", data);
   console.log("currentLeadDetails", singleLeadDetails);
   console.log(allLeadsDetails,'allLeadsDetails')
@@ -135,6 +148,46 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
           <span className="3xl:text-base text-xs text-heading font-bold">
             Lead Information
           </span>
+           <div className="flex items-center gap-3">
+            {hasBotLeadInfoPermission && !isCallHangUp && Cookies.get("is_call_start") === "0" && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const isCallOngoing = !isCallHangUp && Cookies.get("is_call_start") === "0";
+                  if (!isCallOngoing) {
+                    Danger("u can only see this ongoing call");
+                    return;
+                  }
+
+                  const domain = getDomain();
+                  const companyCode = domain?.split(".")[0];
+                  const phone = data?.phone_number;
+
+                  if (!companyCode) {
+                    Danger("Company code is missing.");
+                    return;
+                  }
+                  if (!phone) {
+                    Danger("Phone number is missing.");
+                    return;
+                  }
+
+                  setShowBotModal(true);
+                  setIsBotLoading(true);
+                  const res = await getBotLeadInfo(phone, companyCode);
+                  setBotData(res);
+                } catch (err) {
+                  console.error("Failed to fetch bot info", err);
+                } finally {
+                  setIsBotLoading(false);
+                }
+              }}
+              className="text-[10px] bg-[#322996] hover:bg-[#251d7e] text-white px-2 py-1 rounded transition-colors font-medium border-0"
+            >
+              Bot LeadInfo
+            </button>
+            )}
           {showLeadInformation() && (
             <div
               className="relative h-[14px] w-[14px] 3xl:w-[16px] 3xl:h-[16px] cursor-pointer mr-2"
@@ -143,6 +196,7 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
               <Legacy src={editIcon} alt="edit" layout="fill" />
             </div>
           )}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto pr-2">
           {showLeadInformation() ? (
@@ -284,6 +338,14 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
           editData={data}
           visible={editLead}
           onCancleClick={() => setEditLead(false)}
+        />
+      )}
+      {showBotModal && (
+        <BotLeadInfoModal
+          visible={showBotModal}
+          onCancleClick={() => setShowBotModal(false)}
+          botData={botData}
+          isLoading={isBotLoading}
         />
       )}
     </>
