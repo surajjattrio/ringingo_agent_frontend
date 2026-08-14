@@ -21,6 +21,7 @@ import {
     useIsCallHangUp,
     usePredictiveData,
     useSelectedCampaign,
+    useSelectedQueues,
 } from "@/redux/slice/commonSlice";
 // import { agentEntryAdd } from "@/redux/slice/authSlice";
 
@@ -49,6 +50,7 @@ const LeadDialPage = (props: LeadDialPageProps) => {
     const campaignMode = useCampaignMode();
     const isCallHangUp = useIsCallHangUp();
     const campaignType = useCampaignType();
+    const reduxSelectedQueues = useSelectedQueues();
     console.log(isCallHangUp,'isCallHangUp from leadDialPage');
     
     const dispatch = useAppDispatch();
@@ -57,6 +59,16 @@ const LeadDialPage = (props: LeadDialPageProps) => {
 
     const onCallQueueInbound = async (feature: string, pause?: boolean) => {
         try {
+            let selectedQueuesData = reduxSelectedQueues;
+            if (!selectedQueuesData || selectedQueuesData.length === 0) {
+                const cookieQueues = Cookies.get("selected_queues");
+                if (cookieQueues) {
+                    try { selectedQueuesData = JSON.parse(cookieQueues); } catch (e) {}
+                }
+            }
+
+            const isCallQueueSelection = user?.isCallQueueSelection || user?.permission?.callqueue_selection === "0" || (user as any)?.agent_detail?.agent_permission?.[0]?.callqueue_selection === "0";
+
             let payload: any = {
                 extension: user?.agent_detail?.extension_details[0].username,
                 campaign_uuid: selectedCampaign
@@ -72,6 +84,9 @@ const LeadDialPage = (props: LeadDialPageProps) => {
             }
             if (pause) {
                 payload["pause"] = "true";
+            }
+            if (isCallQueueSelection && selectedQueuesData && selectedQueuesData.length > 0) {
+                payload["selected_queues"] = selectedQueuesData;
             }
             await dispatch(callQueueInbound(payload)).unwrap();
         } catch (error: any) {

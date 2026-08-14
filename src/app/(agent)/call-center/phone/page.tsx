@@ -11,12 +11,12 @@ import {
   onUnSelectCampaign,
 } from "@/redux/slice/chatSlice";
 import CallSummaryCards from "@/components/call-center-components/phone/CallSummaryCards";
-import { onSelectCampaign, onSelectCampaignMode, onSetCampaignType, setCampaignFetched, setCampaignUpdated, useCampaignFetched, useCampaignMode, useCampaignType, useCampaignUpdated, useIsCallHangUp, useSelectedCampaign, useSelectedCampaignDetails, useUserEntry,useCallScreen, } from "@/redux/slice/commonSlice";
-import { Button } from "@/components/forms";
+import { onSelectCampaign, onSelectCampaignMode, onSetCampaignType, setCampaignFetched, setCampaignUpdated, useCampaignFetched, useCampaignMode, useCampaignType, useCampaignUpdated, useIsCallHangUp, useSelectedCampaign, useSelectedCampaignDetails, useUserEntry, useCallScreen, onSelectQueues, setShowQueueModal, useShowQueueModal, useSelectedQueues } from "@/redux/slice/commonSlice";
+import { Button, Select } from "@/components/forms";
 import { SocketProvider } from "@/contexts/chatSocket/SocketProvider";
 import { useAuth } from "@/contexts/hooks/useAuth";
 import { isWhatsAppEnabled } from "@/components/helperFunctions";
-import { getCampaign, getCampaignList, getCampaignOption, updateAgentCampaign, useCampaignOptions } from "@/redux/slice/campaignSlice";
+import { callQueueInbound, getCampaign, getCampaignList, getCampaignOption, updateAgentCampaign, useCampaignOptions } from "@/redux/slice/campaignSlice";
 import ActiveList from "@/components/call-center-components/phone/ActiveList";
 import { getAllLeads, useAllLeadDetails, useSingleLeadDetails } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import { LoginAgentCampaignKey, setLoginAgentCampaign } from "@/utils/Storage";
@@ -42,6 +42,11 @@ export default function Phone() {
 
   const { user } = useAuth();
   console.log("userEntry", userEntry);
+
+  const isShowQueueModal = useShowQueueModal();
+  const [queues, setQueues] = useState<any[]>([]);
+  const [selectedQueues, setSelectedQueues] = useState<any[]>([]);
+  console.log("selectedQueues", selectedQueues);
 
   const dispatch = useAppDispatch();
 
@@ -356,6 +361,34 @@ export default function Phone() {
     }
   };
 
+  useEffect(() => {
+    const savedQueues = Cookies.get("agent_queues");
+    const savedSelectedQueues = Cookies.get("selected_queues");
+
+    if (savedQueues) {
+      try {
+        const parsedQueues = JSON.parse(savedQueues);
+        if (Array.isArray(parsedQueues) && parsedQueues.length > 0) {
+          setQueues(parsedQueues);
+        }
+      } catch (e) {}
+    }
+
+    if (savedSelectedQueues) {
+      try {
+        const parsedSelected = JSON.parse(savedSelectedQueues);
+        if (Array.isArray(parsedSelected) && parsedSelected.length > 0) {
+          const initialSelectedOptions = parsedSelected.map((sq: any) => ({
+            label: sq.name || sq.queue_name,
+            value: sq.uuid || sq._id
+          }));
+          setSelectedQueues(initialSelectedOptions);
+          dispatch(onSelectQueues(parsedSelected));
+        }
+      } catch (e) {}
+    }
+  }, []);
+
   const onGetCampaignOption = async () => {
     try {
       //console.log("selectedCampaignselectedCampaign before ");
@@ -370,6 +403,84 @@ export default function Phone() {
         dispatch(onSelectCampaignMode(result?.data[0]?.dial_method));
         dispatch(onSetCampaignType(result?.data[0]?.campaign_type === "0" ? "outbound" : result.data[0]?.campaign_type === "2" ? "blended" : "inbound"));
         dispatch(onSelectCampaign(result.data[0].uuid));
+
+        // Call Queue selection check after login
+        const hasQueueSelectionPermission = !!(
+          user?.isCallQueueSelection ||
+          user?.permission?.callqueue_selection === "0" ||
+          (user as any)?.agent_detail?.agent_permission?.[0]?.callqueue_selection === "0"
+        );
+
+        if (hasQueueSelectionPermission) {
+          let extractedQueues: any[] = [];
+          if (Array.isArray(result?.data)) {
+            result.data.forEach((item: any) => {
+              if (Array.isArray(item.call_queue_details)) {
+                item.call_queue_details.forEach((q: any) => {
+                  const qId = q.uuid || q._id;
+                  if (qId && !extractedQueues.some((ex: any) => (ex.uuid || ex._id) === qId)) {
+                    extractedQueues.push(q);
+                  }
+                });
+              }
+            });
+          }
+
+          if (extractedQueues.length > 1) {
+            // More than 1 queue: Show Modal for agent to select if not selected already
+            Cookies.set("agent_queues", JSON.stringify(extractedQueues));
+            setQueues(extractedQueues);
+
+            const existingSelectedQueuesCookie = Cookies.get("selected_queues");
+            if (existingSelectedQueuesCookie) {
+              try {
+                const parsedSelected = JSON.parse(existingSelectedQueuesCookie);
+                if (Array.isArray(parsedSelected) && parsedSelected.length > 0) {
+                  const initialSelectedOptions = parsedSelected.map((sq: any) => ({
+                    label: sq.name || sq.queue_name,
+                    value: sq.uuid || sq._id
+                  }));
+                  setSelectedQueues(initialSelectedOptions);
+                  dispatch(onSelectQueues(parsedSelected));
+                  dispatch(setShowQueueModal(false));
+                  return;
+                }
+              } catch (e) {
+                console.log("Error parsing selected_queues cookie:", e);
+              }
+            }
+
+            setSelectedQueues([]);
+            dispatch(setShowQueueModal(true));
+          } else if (extractedQueues.length === 1) {
+            // Only 1 queue: DO NOT show modal, automatically set and dispatch single queue
+            const singleQueueData = [{
+              uuid: extractedQueues[0].uuid || extractedQueues[0]._id,
+              name: extractedQueues[0].name || extractedQueues[0].queue_name || "queue",
+              timeout: extractedQueues[0].timeout || "30"
+            }];
+            Cookies.set("agent_queues", JSON.stringify(extractedQueues));
+            Cookies.set("selected_queues", JSON.stringify(singleQueueData));
+            dispatch(onSelectQueues(singleQueueData));
+            dispatch(setShowQueueModal(false));
+
+            try {
+              let payload: any = {
+                extension: user?.agent_detail?.extension_details?.[0]?.username,
+                campaign_uuid: result.data[0]?.uuid || selectedCampaign || Cookies.get("selectedCampaign") || "",
+                feature: "resume",
+                campaign_type: (result.data[0]?.campaign_type === "1" || campaignType === "inbound") ? "" : "2",
+                selected_queues: singleQueueData
+              };
+              if (result.data[0]?.campaign_type === "2" || campaignType === "blended") {
+                payload["campaign_flag"] = "blended";
+              }
+              dispatch(callQueueInbound(payload));
+            } catch (err: any) {
+              console.log("Error dispatching single queue resume:", err?.message);
+            }
+          }
+        }
       }
     } catch (error: any) {
       console.log("Get campaign list Err ---->", error?.message);
@@ -687,6 +798,71 @@ export default function Phone() {
           onClose={() => setShowEmailModal(false)}
           initialTemplateUuid={selectedTemplate?.value}
         />
+      )}
+      {isShowQueueModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-[480px] bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-[#322996]/10 rounded-lg">
+                <Icon name="userLogin" className="w-6 h-6 text-[#322996]" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Select Call Queue to Login</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Please choose the call queue you would like to join for this session.</p>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-500">
+                {selectedQueues.length} of {queues.length} queue(s) selected
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedQueues.length === queues.length) {
+                    setSelectedQueues([]);
+                  } else {
+                    const allOptions = queues.map((q: any) => ({
+                      label: q.name || q.queue_name,
+                      value: q.uuid || q._id
+                    }));
+                    setSelectedQueues(allOptions);
+                  }
+                }}
+                className="text-xs font-semibold text-[#322996] hover:underline cursor-pointer"
+              >
+                {selectedQueues.length === queues.length ? "Deselect All" : "Select All"}
+              </button>
+            </div>
+            <div className="max-h-[350px] overflow-y-auto mb-8 pr-2 custom-scrollbar">
+              <Select
+                name="selectedQueues"
+                options={queues.map((q: any) => ({ label: q.name || q.queue_name, value: q.uuid || q._id }))}
+                value={selectedQueues}
+                onChange={(options: any) => setSelectedQueues(options || [])}
+                isManual={true}
+                isMulti={true}
+                isClearable={true}
+                isShowLabel={false}
+                placeholder="Search and select queues..."
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  const selectedQueueData = selectedQueues.map((opt: any) => {
+                    const fullQueue = queues.find((q: any) => (q.uuid || q._id) === opt.value);
+                    return { uuid: opt.value, name: opt.label, timeout: fullQueue?.timeout || "30" };
+                  });
+                  dispatch(onSelectQueues(selectedQueueData));
+                  Cookies.set("selected_queues", JSON.stringify(selectedQueueData));
+                  dispatch(setShowQueueModal(false));
+                }}
+                className="w-full py-3 rounded-xl bg-[#322996] text-white font-semibold hover:bg-[#28217a] transition-all shadow-lg shadow-[#322996]/20 active:scale-[0.98]"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </SocketProvider>
   );

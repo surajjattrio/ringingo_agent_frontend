@@ -26,7 +26,7 @@ interface SelectProps {
   isShowPlaceholder?: boolean;
   placeholder?: string;
   icon?: string;
-  isMulti?: string;
+  isMulti?: any;
   tooltip?: string;
   isInfo?: boolean;
   options: OptionTypes[];
@@ -323,9 +323,10 @@ const SelectInput = (props: SelectProps) => {
         )}
         <Select
           isDisabled={isDisabled}
+          isMulti={isMulti}
           className="w-full text-xs"
           name={name}
-          value={getValues() || ""}
+          value={isMulti ? (isManual ? (value || []) : (Array.isArray(value) ? options?.filter((o: any) => value.includes(o.value)) : (value || []))) : (getValues() || "")}
           placeholder={placeholder}
           defaultValue={getDefaultValue() || ""}
           options={options}
@@ -334,9 +335,16 @@ const SelectInput = (props: SelectProps) => {
             if (isManual) {
               onChange(e);
             } else {
-              onChange({
-                target: { value: e ? e.value : "", id: name, name: name },
-              });
+              if (isMulti) {
+                const values = Array.isArray(e) ? e.map((x: any) => x.value) : [];
+                onChange({
+                  target: { value: values, id: name, name: name },
+                });
+              } else {
+                onChange({
+                  target: { value: e ? e.value : "", id: name, name: name },
+                });
+              }
             }
           }}
           onBlur={(e) => {

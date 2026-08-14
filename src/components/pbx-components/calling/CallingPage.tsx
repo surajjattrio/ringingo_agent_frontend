@@ -290,6 +290,7 @@ interface CallingPageProps {
   callerNumber: string;
   callerName: string;
   callType: string;
+  queueName?: string;
   showConferenceBtn: boolean;
   setSuccessMessage: any;
 }
@@ -323,6 +324,7 @@ const CallingPage = (props: CallingPageProps) => {
     callerNumber,
     callerName,
     callType,
+    queueName,
     showConferenceBtn,
     setSuccessMessage,
   } = props;
@@ -460,7 +462,11 @@ const CallingPage = (props: CallingPageProps) => {
                   <span className="3xl:text-xs text-[11px] text-green-500">
                     {callType}
                   </span>
-
+                  {queueName ? (
+                    <span className="text-[10px] font-semibold text-[#322996] bg-[#322996]/15 px-2.5 py-0.5 rounded-full my-0.5">
+                      Queue: {queueName}
+                    </span>
+                  ) : null}
                   {callerName ? (
                     <span
                       className="3xl:text-sm text-xs text-heading font-bold"

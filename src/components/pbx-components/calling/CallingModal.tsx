@@ -40,6 +40,7 @@ import {
   useSelectedCampaignDetails,
   useShowCallModal,
   useUserEntry,
+  useSelectedQueues,
 } from "@/redux/slice/commonSlice";
 import {
   getCallStatistic,
@@ -235,6 +236,7 @@ const CallingModal = (props: CallingModelProps) => {
   const [errorMessage, setErrorMessage] = useState<any>("");
   const [successMessage, setSuccessMessage] = useState<any>("");
   const [callType, setCallType] = useState<string>("");
+  const [incomingQueueName, setIncomingQueueName] = useState<string>("");
   const [showConferenceBtn, setShowConferenceBtn] = useState<boolean>(true);
   const selectedCampaignDetails = useSelectedCampaignDetails(); //new
   // console.log("selectedCampaignDetailsselectedCampaignDetails ternary op",selectedCampaignDetails?.auto_answer == "1" ? false : true);
@@ -599,9 +601,20 @@ const CallingModal = (props: CallingModelProps) => {
       console.log("dial lavel change Err --->", error?.message);
     }
   };
+  const reduxSelectedQueues = useSelectedQueues();
 
   const onCallQueueInbound = async (feature: string = "hang-up") => {
     try {
+      let selectedQueuesData = reduxSelectedQueues;
+      if (!selectedQueuesData || selectedQueuesData.length === 0) {
+        const cookieQueues = Cookies.get("selected_queues");
+        if (cookieQueues) {
+          try { selectedQueuesData = JSON.parse(cookieQueues); } catch (e) {}
+        }
+      }
+
+      const isCallQueueSelection = user?.isCallQueueSelection || user?.permission?.callqueue_selection === "0" || (user as any)?.agent_detail?.agent_permission?.[0]?.callqueue_selection === "0";
+
       let payload: any = {
         extension: user?.agent_detail?.extension_details[0].username,
         campaign_uuid: selectedCampaign
@@ -617,6 +630,9 @@ const CallingModal = (props: CallingModelProps) => {
               ? "0"
               : "2",
       };
+      if (isCallQueueSelection && selectedQueuesData && selectedQueuesData.length > 0) {
+        payload["selected_queues"] = selectedQueuesData;
+      }
       await dispatch(callQueueInbound(payload)).unwrap();
     } catch (error: any) {
       console.log("call queue err -->", error?.message);
@@ -1704,6 +1720,29 @@ const CallingModal = (props: CallingModelProps) => {
       if (isBarge) Cookies.set("isBargeCall", "true");
       if (isWhisper) Cookies.set("isWhisperCall", "true");
       if (isMonitor) Cookies.set("isMonitorCall", "true");
+
+      // Extract Call Queue Name or UUID from SIP headers
+      let qName = "";
+      const queueHeaderKeys = ["X-Queue-Name", "X-Queuename", "X-Call-Queue", "X-Queue", "X-Queue-Title"];
+      for (const key of queueHeaderKeys) {
+        if (headers[key] && headers[key][0]) {
+          qName = headers[key][0].raw || headers[key][0].value || "";
+          if (qName) break;
+        }
+      }
+      //this for retricing the callqueue name from the cookies if not found in the headers
+      // if (!qName && headers["X-Queue-Uuid"] && headers["X-Queue-Uuid"][0]) {
+      //   const qUuid = headers["X-Queue-Uuid"][0].raw || headers["X-Queue-Uuid"][0].value || "";
+      //   const savedQueues = Cookies.get("agent_queues") || Cookies.get("selected_queues");
+      //   if (savedQueues && qUuid) {
+      //     try {
+      //       const parsed = JSON.parse(savedQueues);
+      //       const matched = parsed.find((q: any) => (q.uuid || q._id) === qUuid);
+      //       if (matched) qName = matched.name || matched.queue_name || "";
+      //     } catch (e) {}
+      //   }
+      // }
+      setIncomingQueueName(qName);
     }
 
     let LeadInfo: any;
@@ -5902,6 +5941,7 @@ const CallingModal = (props: CallingModelProps) => {
             callerNumber={callerNumber}
             callerName={callerName}
             callType={callType}
+            queueName={incomingQueueName}
             showConferenceBtn={showConferenceBtn}
             setSuccessMessage={setSuccessMessage}
           />
@@ -5914,6 +5954,7 @@ const CallingModal = (props: CallingModelProps) => {
             receiveCall={receiveCall}
             callerNumber={callerNumber}
             callerName={callerName}
+            queueName={incomingQueueName}
           />
         );
 
@@ -5983,6 +6024,7 @@ const CallingModal = (props: CallingModelProps) => {
           receiveCall={receiveCall}
           callerNumber={callerNumber}
           callerName={callerName}
+          queueName={incomingQueueName}
         />
       </>
     );
@@ -5998,6 +6040,7 @@ const CallingModal = (props: CallingModelProps) => {
           seconds={seconds}
           minutes={minutes}
           setShowModal={setShowModal}
+          queueName={incomingQueueName}
         />
       </>
     );

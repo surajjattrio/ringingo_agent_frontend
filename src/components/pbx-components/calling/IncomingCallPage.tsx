@@ -11,12 +11,13 @@ interface CallingPageProps {
     receiveCall: any;
     callerNumber: string;
     callerName: string;
+    queueName?: string;
 }
 
 /* ============================== INCOMING CALL PAGE ============================== */
 
 const IncomingCallPage = (props: CallingPageProps) => {
-    const { hangupCall, receiveCall, callerNumber, callerName } = props;
+    const { hangupCall, receiveCall, callerNumber, callerName, queueName } = props;
 
     return (
         <>
@@ -34,6 +35,12 @@ const IncomingCallPage = (props: CallingPageProps) => {
                             <span className="3xl:text-xs text-[11px] text-heading">
                                 Incoming Call From
                             </span>
+
+                            {queueName ? (
+                                <span className="text-xs font-semibold text-[#322996] bg-[#322996]/15 px-3 py-0.5 rounded-full my-1">
+                                    Queue: {queueName}
+                                </span>
+                             ) : null} 
                             {callerName ? (
                                 <span className="3xl:text-sm text-xs text-primary-green font-bold">
                                     {callerName}

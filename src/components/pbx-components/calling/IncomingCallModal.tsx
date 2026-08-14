@@ -20,6 +20,7 @@ interface IncomingCallModalProps {
     setShowModal: any;
     callerNumber: string;
     callerName: string;
+    queueName?: string;
 }
 
 /* ============================== INCOMING CALL MODEL ============================== */
@@ -34,6 +35,7 @@ const IncomingCallModal = (props: IncomingCallModalProps) => {
         setShowModal,
         callerNumber,
         callerName,
+        queueName,
     } = props;
 
     const dispatch = useAppDispatch();
@@ -51,6 +53,11 @@ const IncomingCallModal = (props: IncomingCallModalProps) => {
                         >
                             <div className="flex flex-col text-primary-green">
                                 <span className="3xl:text-sm text-xs">Incoming Call From</span>
+                                {queueName ? (
+                                    <span className="text-[10px] font-semibold text-[#322996] bg-[#322996]/15 px-2 py-0.5 rounded w-fit my-0.5">
+                                        Queue: {queueName}
+                                    </span>
+                                ) : null}
                                 {callerName ? (
                                     <span className="3xl:text-sm text-xs font-bold w-[90%] overflow-hidden whitespace-nowrap text-ellipsis">
                                         {callerName}

@@ -11,6 +11,7 @@ interface ActiveCallModalProps {
     minutes: number;
     setShowModal: any;
     setShowActiveModal: any;
+    queueName?: string;
 }
 
 /* ============================== ACTIVE CALL MODEL ============================== */
@@ -23,6 +24,7 @@ const ActiveCallModal = (props: ActiveCallModalProps) => {
         minutes,
         setShowModal,
         setShowActiveModal,
+        queueName,
     } = props;
 
     return (
@@ -40,8 +42,13 @@ const ActiveCallModal = (props: ActiveCallModalProps) => {
                                 setShowActiveModal(false);
                             }}
                         >
-                            <div className="text-white">
+                            <div className="text-white flex flex-col">
                                 <span className="3xl:text-sm text-xs font-bold">Active Call</span>
+                                {queueName ? (
+                                    <span className="text-[10px] text-white/90 font-medium truncate max-w-[90px]">
+                                        {queueName}
+                                    </span>
+                                ) : null}
                             </div>
                             <div className="flex 3xl:gap-2 gap-1 items-center ">
                                 <>

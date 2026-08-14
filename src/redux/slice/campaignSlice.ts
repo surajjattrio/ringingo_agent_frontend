@@ -231,6 +231,7 @@ const campaignSlice = createSlice({
                             api_config_uuid: val?.api_config_uuid || "",
                             email_type: val?.email_type || "none",
                             message_config_uuid: val?.message_config_uuid || "",
+                            call_queue_details: val?.call_queue_details || [],
                             campaign:
                                 val?.campaign_type === "0"
                                     ? "outbound"

@@ -40,6 +40,8 @@ interface InitialState {
   campaignFetched: boolean,
   campaignUpdated: boolean,
   webrtcStatus: 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR';
+  isShowQueueModal: boolean;
+  selectedQueues: any[];
 }
 
 /* ============================== COMMON SLICE ============================== */
@@ -77,6 +79,8 @@ const initialState: InitialState = {
   selectedCampaignDetails: undefined,
   dispositionTimerEnded: false,
   webrtcStatus: 'DISCONNECTED',
+  isShowQueueModal: false,
+  selectedQueues: [],
 };
 
 const commonSlice = createSlice({
@@ -181,6 +185,12 @@ const commonSlice = createSlice({
     setWebRtcStatus(state, action: PayloadAction<'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR'>) {
       state.webrtcStatus = action.payload;
     },
+    setShowQueueModal(state, action: PayloadAction<boolean>) {
+      state.isShowQueueModal = action.payload;
+    },
+    onSelectQueues(state, action: PayloadAction<any[]>) {
+      state.selectedQueues = action.payload;
+    },
     clearCommonSlice: () => initialState,
   },
 });
@@ -221,6 +231,8 @@ export const {
   onSelectCampaignDetails,
   onLeadDispositionTimerEnded,
   setWebRtcStatus,
+  setShowQueueModal,
+  onSelectQueues,
 } = commonSlice.actions;
 
 export const selectCampaignFetched = (state: RootState) => state.common.campaignFetched;
@@ -435,3 +447,14 @@ export const useWebRtcStatus = () => {
   const webrtcStatus = useAppSelector(selectWebRtcStatus);
   return useMemo(() => webrtcStatus, [webrtcStatus]);
 };
+export const selectShowQueueModal = (state: RootState) => state.common.isShowQueueModal;
+export const useShowQueueModal = () => {
+  const isShowQueueModal = useAppSelector(selectShowQueueModal);
+  return useMemo(() => isShowQueueModal, [isShowQueueModal]);
+};
+
+export const selectSelectedQueues = (state: RootState) => state.common.selectedQueues;
+export const useSelectedQueues = () => {
+  const selectedQueues = useAppSelector(selectSelectedQueues);
+  return useMemo(() => selectedQueues, [selectedQueues]);
+}

@@ -170,6 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const sticky_agent = permission?.sticky_agent === "1";
         const settings = permission?.settings === "1";
         const isNumberMasking = permission?.number_masking === "0";
+        const isCallQueueSelection = permission?.callqueue_selection === "0";
         const isMessaging=permission?.whatsapp==="1"|| permission?.instagram==="1"|| permission?.facebook==="1"
         console.log(isMessaging,'isMessaging',isRecording,'isRecording');
         
@@ -182,6 +183,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           isNumberMasking,
           settings,
           isMessaging,
+          isCallQueueSelection,
           urls: prepareData(isPbx, permission),
         };
         data.isPbx = false;
@@ -317,8 +319,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const autoLogoutEnabled = state?.user?.permission?.auto_logout !== "1";
     
     // Default to 30 minutes, or use configured time
-    const configuredTimeout = state?.user?.permission?.idle_timeout 
-      ? parseInt(state.user.permission.idle_timeout, 10) * 60 * 1000 
+    const configuredTimeout = state?.user?.permission?.idle_timeout
+      ? Number.parseInt(state.user.permission.idle_timeout, 10) * 60 * 1000
       : 30 * 60 * 1000;
 
     // Time before auto-logout when the warning should appear (in ms)
