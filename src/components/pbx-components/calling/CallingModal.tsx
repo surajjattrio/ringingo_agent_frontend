@@ -6087,17 +6087,16 @@ const CallingModal = (props: CallingModelProps) => {
             2xl:max-w-[289px]
             h-[480px] 
             bg-white
-            border border-blue-700 
-            rounded-3xl 
+            rounded-[20px] 
             drop-shadow-lg
           "
             onClick={(e: any) => e.stopPropagation()}
           >
             {/* Top Bar */}
-            <div className="3xl:px-6 3xl:py-2.5 bg-black bg-dark-100 py-2 px-4 rounded-t-lg relative">
+            <div className="3xl:px-6 3xl:py-2.5 bg-black bg-dark-100 py-2 px-4 rounded-t-[20px] relative">
               <div className="flex items-center">
                 <div
-                  className={`w-2.5 h-2.5 rounded-full mr-1.5 ${callScreen === "LIVE" || callScreen === "INCOMING"
+                  className={`w-2.5 h-2.5 rounded-[20px] mr-1.5 ${callScreen === "LIVE" || callScreen === "INCOMING"
                     ? "bg-primary-green-success"
                     : "bg-error"
                     }`}
@@ -6142,7 +6141,7 @@ const CallingModal = (props: CallingModelProps) => {
               (campaignMode === "1" || campaignMode === "3") && (
                 <div className="flex justify-around  px-5 pr-8 mt-4">
                   <button
-                    className={`h-[30px] w-[90px] text-[10px] rounded-full transition duration-200 font-semibold ${dialType === "leadDial"
+                    className={`h-[30px] w-[90px] text-[10px] rounded-[10px] transition duration-200 font-semibold ${dialType === "leadDial"
                       ? "bg-[#322996] text-white border"
                       : "bg-white text-[#979797] border"
                       }`}
@@ -6152,7 +6151,7 @@ const CallingModal = (props: CallingModelProps) => {
                   </button>
 
                   <button
-                    className={`h-[30px] w-[90px] text-[10px] rounded-full transition duration-200 font-semibold ${dialType === "manualDial"
+                    className={`h-[30px] w-[90px] text-[10px]   rounded-[10px] transition duration-200 font-semibold ${dialType === "manualDial"
                       ? "bg-[#322996] text-white border"
                       : "bg-white text-[#979797] border"
                       }`}

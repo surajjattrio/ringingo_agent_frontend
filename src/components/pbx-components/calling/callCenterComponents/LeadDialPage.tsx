@@ -30,6 +30,7 @@ import Cookies from "js-cookie";
 import { userAgentUnRegistration } from "../CallingModal";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
 import { getSocket } from "@/config/socket";
+import { Pause, Play } from "lucide-react";
 
 // ASSETS
 const play_circle = "/assets/icons/red/play-circle.svg";
@@ -347,7 +348,11 @@ const LeadDialPage = (props: LeadDialPageProps) => {
         <>
             <div className="3xl:h-[83%] h-[85%] px-2 select-none flex justify-center items-center flex-col h-full pb-6 gap-6 mt-14 ">
                 <div
-                    className="relative w-[75px] h-[75px] 3xl:w-[85px] 3xl:h-[85px] cursor-pointer"
+                className={`relative w-[75px] h-[75px] 3xl:w-[85px] 3xl:h-[85px] cursor-pointer flex items-center justify-center rounded-full transition-all duration-300 transform hover:scale-110 shadow-xl ${isCallResume
+                            ? "bg-gradient-to-br from-rose-500 to-red-600 hover:shadow-rose-500/40"
+                            : "bg-gradient-to-br from-emerald-400 to-emerald-600 hover:shadow-emerald-500/40"
+                            }`}
+                    // className="relative w-[75px] h-[75px] 3xl:w-[85px] 3xl:h-[85px] cursor-pointer"
                     onClick={() => {
                         console.log("iscall ahng upppppp:::", isCallHangUp)
                         console.log("iscall startrttt:::", Cookies.get("is_call_start"))
@@ -361,14 +366,21 @@ const LeadDialPage = (props: LeadDialPageProps) => {
                         }
                     }}
                 >
-                    <Legacy
+                    {/* <Legacy
                         src={isCallResume ? play_circle : pause_circle}
                         alt="play"
                         layout="fill"
-                    />
+                    /> */}
+                     {isCallResume ? (
+                            <Play size={40} className="text-white fill-current ml-1" />
+                        ) : (
+                            <Pause size={40} className="text-white fill-current" />
+                        )}
                 </div>
 
-                <label className="font-bold  text-heading leading-none text-center text-[15px] whitespace-wrap">
+                {/* <label className="font-bold  text-heading leading-none text-center text-[15px] whitespace-wrap">     */}
+                <label className="font-semibold text-heading leading-none text-center text-[13px] whitespace-wrap">
+
                     {isCallResume
                         ? campaignType === "inbound"
                             ? "Press Resume button to receiving calls"

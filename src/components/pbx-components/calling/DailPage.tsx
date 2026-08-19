@@ -1,5 +1,6 @@
 import Legacy from "next/legacy/image";
 import { useAuth } from "@/contexts/hooks/useAuth";
+import { Phone } from "lucide-react";
 import {
   onShowCallModal,
   useCampaignMode,
@@ -181,13 +182,21 @@ const DailPage = (props: DailPageProps) => {
             <Legacy src={callIcon} alt="call" height={18} width={18} />
           </div>  */}
 
-          <div
+          {/* <div
             className={`bg-primary-green 3xl:w-[80px] 3xl:h-10 w-[65px] h-9 drop-shadow-sm 
              flex justify-center items-center rounded-md cursor-pointer 
              ${isCalling ? "opacity-50 pointer-events-none" : "hover:bg-opacity-80"}`}
             onClick={checkDispostionCauses}
           >
             <Legacy src={callIcon} alt="call" height={18} width={18} />
+          </div> */}
+          <div
+            className={`bg-gradient-to-br from-emerald-400 to-emerald-600 3xl:w-[80px] 3xl:h-10 w-[65px] h-9 drop-shadow-lg 
+             flex justify-center items-center rounded-md cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-emerald-500/40
+             ${isCalling ? "opacity-50 pointer-events-none" : ""}`}
+            onClick={checkDispostionCauses}
+          >
+            <Phone size={20} className="text-white fill-current" />
           </div>
 
         </div>

@@ -51,6 +51,7 @@ import { getActiveUnreadChat } from "@/redux/slice/chatSlice";
 import OmniChannelServiceStandalone from "@/components/popups/OmniChannelServiceStandalone";
 import { getSocket } from "@/config/socket";
   import { startKeepAliveMic, stopKeepAliveMic } from "@/utils/micKeepAlive";
+import { Phone } from "lucide-react";
 
 
 
@@ -635,12 +636,15 @@ useEffect(() => {
             }`}
         >
           <div
-            className="flex items-center justify-center bg-primary-green rounded-full 3xl:h-[54px] 3xl:w-[54px] h-[44px] w-[44px] fixed right-7 bottom-8 z-50 drop-shadow-lg cursor-pointer hover:bg-opacity-80"
+            // className="flex items-center justify-center bg-primary-green rounded-full 3xl:h-[54px] 3xl:w-[54px] h-[44px] w-[44px] fixed right-7 bottom-8 z-50 drop-shadow-lg cursor-pointer hover:bg-opacity-80"
+            // onClick={() => setShowModal(true)}
+            className="flex items-center justify-center rounded-full 3xl:h-[54px] 3xl:w-[54px] h-[44px] w-[44px] fixed right-7 bottom-8 z-50cursor-pointer hover:bg-opacity-80  bg-gradient-to-br from-emerald-400 to-emerald-600 drop-shadow-lg cursor-pointer hover:bg-opacity-800 "  
             onClick={() => setShowModal(true)}
           >
-            <div className="relative w-[24px] h-[24px] 3xl:w-[28px] 3xl:h-[28px]">
-              <Legacy src={callIcon} alt="call" layout="fill" />
-            </div>
+            {/* <div className="relative w-[24px] h-[24px] 3xl:w-[28px] 3xl:h-[28px]"> */}
+              {/* <Legacy src={callIcon} alt="call" layout="fill" /> */}
+                <Phone size={22} className="text-white fill-current" /> 
+            {/* </div> */}
           </div>
           {/* footer data */}
           {/* {personalizeData?.footer ? (
