@@ -2494,7 +2494,7 @@ const CallingModal = (props: CallingModelProps) => {
   ) => {
     dispatch(setCallerNumber(""));
     dispatch(setCallerName(""));
-    let domain = Cookies.get("domain") || "10.180.67.151";
+    const domain = Cookies.get("domain") || user?.agent_detail?.tenant[0]?.domain;
     // let domain = Cookies.get("domain") || "192.168.1.25";
     // BeepPlay.play();
     playClickBeep()
