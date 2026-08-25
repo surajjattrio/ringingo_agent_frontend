@@ -408,11 +408,17 @@ const CallingModal = (props: CallingModelProps) => {
   }, [isShowCallDuration]);
 
   const autoAnswerRef = useRef("1"); // default 1
-  useEffect(() => {
-    autoAnswerRef.current = String(selectedCampaignDetails?.auto_answer ?? "1");
-    console.log("✅ autoAnswerRef updated =", autoAnswerRef.current);
-  }, [selectedCampaignDetails?.auto_answer]);
+  // useEffect(() => {
+  //   autoAnswerRef.current = String(selectedCampaignDetails?.auto_answer ?? "1");
+  //   console.log("✅ autoAnswerRef updated =", autoAnswerRef.current);
+  // }, [selectedCampaignDetails?.auto_answer]);
 
+useEffect(() => {
+  const v = selectedCampaignDetails?.auto_answer;
+  if (v === undefined || v === null || v === "") return; // keep last known good value
+  autoAnswerRef.current = String(v);
+  Cookies.set("autoAnswer", String(v), { expires: 1 });
+}, [selectedCampaignDetails?.auto_answer]);
 
   useEffect(() => {
     if (userEntry === "login-entry") {
@@ -1777,7 +1783,8 @@ const CallingModal = (props: CallingModelProps) => {
             : Array.from(callNumber).fill("X", 1, -1).join("")
           : callNumber;
     dispatch(setCallerNumber(CallerNumber));
-    const autoAnswerValue = autoAnswerRef.current;
+    // const autoAnswerValue = autoAnswerRef.current;
+    const autoAnswerValue =Cookies.get("autoAnswer") ?? autoAnswerRef.current ?? "1";
 
     console.log("✅ autoAnswerValue (ref) =", autoAnswerValue);
     console.log(autoAnswer, "auto answer value in invite");
@@ -1841,7 +1848,7 @@ const CallingModal = (props: CallingModelProps) => {
           console.log("Incoming initiated ....");
           Cookies.set("is_call_start", "0");
           // ::yaksh::
-          if (Cookies.get("isReceivedDirect") === "0" && autoAnswer) {
+          if (Cookies.get("isReceivedDirect") === "0" && autoAnswerRef.current === "0") {
             // setTimeout(() => {
             receiveCall();
             // }, 2000);
