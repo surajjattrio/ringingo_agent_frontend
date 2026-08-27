@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Legacy from "next/legacy/image";
 
 // PROJECT IMPORTS
 import { useAppDispatch } from "@/redux/hooks";
 import { Success, Danger } from "@/redux/services/toasterService";
-import { getWabaSsoTokenPost,sendMessageConfigPost } from "@/redux/services/chatService";
+import { getWabaSsoTokenPost, sendMessageConfigPost, getMessageConfigDetails } from "@/redux/services/chatService";
 import {
   clearLeadDetails,
   clearLeadUuid,
@@ -40,6 +40,7 @@ import {
   getCallQueueList,
   updateLeadStatus,
   useActiveCallQueueList,
+  useCampaignOptions,
 } from "@/redux/slice/campaignSlice";
 import { Button } from "@/components/forms";
 import {
@@ -107,7 +108,49 @@ const ActiveList = ({
   const [selectedWhatsappLead, setSelectedWhatsappLead] = useState<any>(null);
   const [whatsappTargetNumber, setWhatsappTargetNumber] = useState<string>("");
   const [whatsappLoading, setWhatsappLoading] = useState(false);
+  //whatspp
+  const [templatesList, setTemplatesList] = useState<string[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [activeDropdownLeadId, setActiveDropdownLeadId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (selectedCampaignDetails?.message_config_uuid) {
+      getMessageConfigDetails(selectedCampaignDetails.message_config_uuid)
+        .then((res: any) => {
+          const configData = res?.data?.data || res?.data || res || {};
+          const templates = configData?.templates || [];
+          if (Array.isArray(templates)) {
+            setTemplatesList(templates);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load message config templates", err);
+        });
+    } else {
+      setTemplatesList([]);
+    }
+  }, [selectedCampaignDetails]);
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveDropdownLeadId(null);
+    };
+    if (activeDropdownLeadId) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [activeDropdownLeadId]);
+
+  const handleSelectTemplateAndOpenModal = (val: any, tplName: string) => {
+    setActiveDropdownLeadId(null);
+    setSelectedWhatsappLead(val);
+    setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
+    setSelectedTemplate(tplName);
+    setWhatsappModalVisible(true);
+  };
+// whatspp
   const handleWhatsAppConfirm = async () => {
     if (!selectedWhatsappLead || !whatsappTargetNumber) {
       Danger("Please provide a valid phone number.");
@@ -119,7 +162,8 @@ const ActiveList = ({
         const payload = {
           config_uuid: selectedCampaignDetails.message_config_uuid,
           to: whatsappTargetNumber,
-          lead_data: selectedWhatsappLead
+          lead_data: selectedWhatsappLead,
+          template_name: selectedTemplate || undefined,
         };
         const response: any = await sendMessageConfigPost(payload);
         if (response?.data?.statusCode === 200 || response?.data?.statusCode === 201 || response?.statusCode === 200 || response?.status === 200) {
@@ -142,6 +186,7 @@ const ActiveList = ({
       setWhatsappLoading(false);
       setWhatsappModalVisible(false);
       setSelectedWhatsappLead(null);
+      setSelectedTemplate("");
     }
   };
 
@@ -673,38 +718,66 @@ const ActiveList = ({
                           Outgoing call
                         </span>
                       </div>
-                      <div className="col-span-1 flex gap-2 justify-end">
-                        <div
-                          className="cursor-pointer"
-                          onClick={async () => {
-                             if (selectedCampaignDetails?.message_config_uuid) {
-                              setSelectedWhatsappLead(val);
-                              setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
-                              setWhatsappModalVisible(true);
-                            } else {
-                            try {
-                              const res: any = await getWabaSsoTokenPost();
-                              // debugger
-                              const redirectUrl = res?.data?.redirect_url;
-                              if (redirectUrl) {
-                                window.open(redirectUrl, "_blank");
+                      <div className="col-span-1 flex gap-2 justify-end items-center">
+                        <div className="relative">
+                          <div
+                            className="cursor-pointer"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (selectedCampaignDetails?.message_config_uuid) {
+                                if (templatesList && templatesList.length > 0) {
+                                  setActiveDropdownLeadId((prev) => (prev === `queue_lead_${val.lead_management_uuid || index}` ? null : `queue_lead_${val.lead_management_uuid || index}`));
+                                } else {
+                                  setSelectedWhatsappLead(val);
+                                  setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
+                                  setSelectedTemplate("");
+                                  setWhatsappModalVisible(true);
+                                }
                               } else {
-                                Danger("SSO redirect URL not available");
+                                try {
+                                  const res: any = await getWabaSsoTokenPost();
+                                  const redirectUrl = res?.data?.redirect_url;
+                                  if (redirectUrl) {
+                                    window.open(redirectUrl, "_blank");
+                                  } else {
+                                    Danger("SSO redirect URL not available");
+                                  }
+                                } catch (err) {
+                                  Danger("Failed to generate SSO token");
+                                }
                               }
-                            } catch (err) {
-                              Danger("Failed to generate SSO token");
-                            }
-                          }
-                          }}
-                        >
-                          <div className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[16px] h-[16px]">
-                            <Legacy
-                              src={whatsapp}
-                              alt="whatsapp"
-                              layout="fill"
-                            />
+                            }}
+                          >
+                            <div className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[16px] h-[16px]">
+                              <Legacy
+                                src={whatsapp}
+                                alt="whatsapp"
+                                layout="fill"
+                              />
+                            </div>
                           </div>
-                          </div>
+                          {activeDropdownLeadId === `queue_lead_${val.lead_management_uuid || index}` && templatesList.length > 0 && (
+                            <div 
+                              className="absolute right-0 top-full mt-1.5 z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px] max-h-48 overflow-y-auto text-left"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="px-3 py-1.5 text-[11px] font-bold text-gray-500 border-b border-gray-100 uppercase tracking-wider">
+                                Select Template
+                              </div>
+                              {templatesList.map((tpl: string, tIndex: number) => (
+                                <button
+                                  key={tIndex}
+                                  type="button"
+                                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                  onClick={() => handleSelectTemplateAndOpenModal(val, tpl)}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                  <span className="truncate">{tpl}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         {isCallHangUp && (
                           <div
                             className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[18px] h-[18px] cursor-pointer"
@@ -804,36 +877,65 @@ const ActiveList = ({
                           </div>
                         ) : null}
                       </div>
-                      <div className="col-span-1 flex gap-2 justify-end">
-                        <div
-                          className="cursor-pointer"
-                          onClick={async () => {
-                             if (selectedCampaignDetails?.message_config_uuid) {
-                              setSelectedWhatsappLead(val);
-                              setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
-                              setWhatsappModalVisible(true);
-                            } else {
-                            try {
-                              const res: any = await getWabaSsoTokenPost();
-                              const redirectUrl = res?.data?.redirect_url;
-                              if (redirectUrl) {
-                                window.open(redirectUrl, "_blank");
+                      <div className="col-span-1 flex gap-2 justify-end items-center">
+                        <div className="relative">
+                          <div
+                            className="cursor-pointer"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (selectedCampaignDetails?.message_config_uuid) {
+                                if (templatesList && templatesList.length > 0) {
+                                  setActiveDropdownLeadId((prev) => (prev === `active_lead_${val.lead_management_uuid || index}` ? null : `active_lead_${val.lead_management_uuid || index}`));
+                                } else {
+                                  setSelectedWhatsappLead(val);
+                                  setWhatsappTargetNumber(val?.custom_phone_number || val?.phone_number || "");
+                                  setSelectedTemplate("");
+                                  setWhatsappModalVisible(true);
+                                }
                               } else {
-                                Danger("SSO redirect URL not available");
+                                try {
+                                  const res: any = await getWabaSsoTokenPost();
+                                  const redirectUrl = res?.data?.redirect_url;
+                                  if (redirectUrl) {
+                                    window.open(redirectUrl, "_blank");
+                                  } else {
+                                    Danger("SSO redirect URL not available");
+                                  }
+                                } catch (err) {
+                                  Danger("Failed to generate SSO token");
+                                }
                               }
-                            } catch (err) {
-                              Danger("Failed to generate SSO token");
-                            }
-                          }
-                          }}
-                        >
-                          <div className="relative 5xl:w-[24px] 5xl:h-[24px] 4xl:w-[20px] 4xl:-h-[20px] w-[16px] h-[16px]">
-                            <Legacy
-                              src={whatsapp}
-                              alt="whatsapp"
-                              layout="fill"
-                            />
+                            }}
+                          >
+                            <div className="relative 5xl:w-[24px] 5xl:h-[24px] 4xl:w-[20px] 4xl:-h-[20px] w-[16px] h-[16px]">
+                              <Legacy
+                                src={whatsapp}
+                                alt="whatsapp"
+                                layout="fill"
+                              />
+                            </div>
                           </div>
+                          {activeDropdownLeadId === `active_lead_${val.lead_management_uuid || index}` && templatesList.length > 0 && (
+                            <div 
+                              className="absolute right-0 top-full mt-1.5 z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 min-w-[160px] max-h-48 overflow-y-auto text-left"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="px-3 py-1.5 text-[11px] font-bold text-gray-500 border-b border-gray-100 uppercase tracking-wider">
+                                Select Template
+                              </div>
+                              {templatesList.map((tpl: string, tIndex: number) => (
+                                <button
+                                  key={tIndex}
+                                  type="button"
+                                  className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 flex items-center gap-2 transition-colors border-b border-gray-50 last:border-0"
+                                  onClick={() => handleSelectTemplateAndOpenModal(val, tpl)}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                  <span className="truncate">{tpl}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div
                           className="relative 5xl:w-[26px] 5xl:h-[26px] 4xl:w-[22px] 4xl:-h-[22px] w-[18px] h-[18px] cursor-pointer"
@@ -998,20 +1100,34 @@ const ActiveList = ({
           setWhatsappModalVisible(false);
           setSelectedWhatsappLead(null);
           setWhatsappTargetNumber("");
+          setSelectedTemplate("");
         }}
-        onDoneClick={handleWhatsAppConfirm}
+        onDoneClick={() => handleWhatsAppConfirm()}
       >
-        <div className="mb-6 mt-2 pr-10">
-          <p className="text-xs font-normal text-txt-primary mb-3">
+        <div className="mb-6 mt-2 pr-10 flex flex-col gap-3">
+          <p className="text-xs font-normal text-txt-primary">
             Are you sure you want to send a WhatsApp message? You can edit the number below before sending:
           </p>
-          <input
-            type="text"
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-blue text-heading"
-            value={whatsappTargetNumber}
-            onChange={(e) => setWhatsappTargetNumber(e.target.value)}
-            placeholder="Enter phone number"
-          />
+
+          {selectedTemplate && (
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md">
+              <span className="text-xs font-semibold text-emerald-800">Selected Template:</span>
+              <span className="text-xs font-bold text-emerald-600 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                {selectedTemplate}
+              </span>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-txt-primary">Phone Number</label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-blue text-heading"
+              value={whatsappTargetNumber}
+              onChange={(e) => setWhatsappTargetNumber(e.target.value)}
+              placeholder="Enter phone number"
+            />
+          </div>
         </div>
       </ConfirmationModal>
     </>

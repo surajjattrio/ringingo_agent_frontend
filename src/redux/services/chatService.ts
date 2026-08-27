@@ -16,6 +16,7 @@ import {
   WHATS_APP_MESSAGE_LIST,
   GENERATE_WABA_SSO_TOKEN,
   SEND_MESSAGE_CONFIG,
+  MESSAGE_CONFIGURATION,
 } from "@/API/constAPI";
 import { apiInstance } from "../axiosApi";
 
@@ -85,4 +86,8 @@ export const getWabaSsoTokenPost = () => {
 };
 export const sendMessageConfigPost = (payload: any) => {
   return apiInstance.post(SEND_MESSAGE_CONFIG, payload);
+};
+
+export const getMessageConfigDetails = (id: string) => {
+  return apiInstance.get(`${MESSAGE_CONFIGURATION}/${id}`);
 };
