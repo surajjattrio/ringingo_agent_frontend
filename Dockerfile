@@ -24,8 +24,14 @@ FROM node:18-alpine AS runner
 
 WORKDIR /app
 
+RUN apk add --no-cache tzdata
+
+ENV TZ=Asia/Kolkata
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
 
 # Copy node_modules from builder
 COPY --from=builder /app/node_modules ./node_modules

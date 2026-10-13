@@ -68,6 +68,7 @@ import AddNotePage from "./AddNotePage";
 import ActiveCallModal from "./ActiveCallModal";
 import CallingPage from "./CallingPage";
 import DailPage from "./DailPage";
+import { Pin, PinOff } from "lucide-react";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
 
 // THIRD-PARTY IMPORT
@@ -86,9 +87,11 @@ import {
   Referral,
 } from "sip.js";
 import { OutgoingInviteRequest } from "sip.js/lib/core";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { Danger } from "@/redux/services/toasterService";
 import getDomain from "@/utils/GetDoamin";
+import { triggerLimechatInboundCallAction, openLimechatOutboundTab } from "@/utils/limechat";
 
 // ASSETS
 // const close = "/assets/icons/close.svg";
@@ -208,11 +211,13 @@ interface CallingModelProps {
   showModal: boolean;
   setShowModal?: any;
   onCancleClick: any;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
 }
 /* ============================== CALLING MODAL ============================== */
 
 const CallingModal = (props: CallingModelProps) => {
-  const { showModal, onCancleClick, setShowModal } = props;
+  const { showModal, onCancleClick, setShowModal, isPinned = false, onTogglePin } = props;
   const [number, setNumber] = useState<string>("");
   const [isHold, setIsHold] = useState<boolean>(false);
   // const callerTuneplay = new Audio(CallerTuneFile);
@@ -243,6 +248,18 @@ const CallingModal = (props: CallingModelProps) => {
 
   const autoAnswer = selectedCampaignDetails?.auto_answer;
   console.log("auto anss", autoAnswer);
+  console.log("selectedCampaignDetailsselectedCampaignDetails", selectedCampaignDetails);
+
+  const checkLimechatEnabled = () => {
+    const rawVal =
+      selectedCampaignDetails?.is_limechat ??
+      Cookies.get("is_limechat") ??
+      "1";
+
+    const isEnabled = rawVal === "0" || rawVal === true || rawVal === "true";
+    console.log(">>> [LimeChat Toggle Check] is_limechat:", rawVal, "-> enabled:", isEnabled);
+    return isEnabled;
+  };
 
   const { user } = useAuth();
   const dispatch = useAppDispatch();
@@ -272,6 +289,11 @@ const CallingModal = (props: CallingModelProps) => {
   const callerTuneRef = useRef<HTMLAudioElement | null>(null);
   const callerBeepRef = useRef<HTMLAudioElement | null>(null);
   const beepRef = useRef<HTMLAudioElement | null>(null);
+
+  // Ref tracking to avoid duplicate dummy API hits or duplicate tab opens for the same call
+  const lastHandledIncomingCallRef = useRef<string | null>(null);
+  const isIncomingTabOpenedRef = useRef<boolean>(false);
+
   const playTune = () => {
     const a = callerTuneRef.current;
     if (!a) return;
@@ -1599,21 +1621,46 @@ useEffect(() => {
     //   return;
     // }
 
-    if (Cookies.get("isRejected") === "0") {
-      invitation.reject({ status_code: 603, reason_phrase: "Decline" });
-      console.log("Outbound campaign: No incoming calls allowed.");
-      return;
+    // Click-to-call (CTC) invites carry a "P-ctc" header set by the PBX (see ctc.service.ts) -
+    // these must always ring through on the extension, regardless of outbound-campaign pause
+    // state, must skip after-call-work (see callKeypadSiderProperties), and can optionally ask
+    // to be auto-answered via "P-ctc-auto-answer: 1" (see the receiveCall branch further below).
+    const ctcInviteHeaders =
+      invitation?.incomingInviteRequest?.message?.headers || {};
+    const isCtcInvite = !!(ctcInviteHeaders["P-ctc"] && ctcInviteHeaders["P-ctc"][0]);
+    const ctcAutoAnswer =
+      isCtcInvite &&
+      !!(
+        ctcInviteHeaders["P-ctc-auto-answer"] &&
+        ctcInviteHeaders["P-ctc-auto-answer"][0] &&
+        ctcInviteHeaders["P-ctc-auto-answer"][0].raw === "1"
+      );
+    if (isCtcInvite) {
+      Cookies.set("isCtcCall", "true");
+      console.log("CTC invite detected - skipping pause/campaign reject checks");
+    } else {
+      // Clear any stale flag left behind if a previous CTC call's termination cleanup
+      // was skipped for some reason - a regular call must never inherit it.
+      Cookies.remove("isCtcCall");
     }
 
-    if (
-      !user?.isPbx &&
-      Cookies.get("call_status") === "pause" &&
-      campaignMode != "0" &&
-      campaignMode != "2"
-    ) {
-      invitation.reject({ status_code: 603, reason_phrase: "Decline" });
-      console.log("Outbound campaign: No incoming calls allowed.");
-      return;
+    if (!isCtcInvite) {
+      if (Cookies.get("isRejected") === "0") {
+        invitation.reject({ status_code: 603, reason_phrase: "Decline" });
+        console.log("Outbound campaign: No incoming calls allowed.");
+        return;
+      }
+
+      if (
+        !user?.isPbx &&
+        Cookies.get("call_status") === "pause" &&
+        campaignMode != "0" &&
+        campaignMode != "2"
+      ) {
+        invitation.reject({ status_code: 603, reason_phrase: "Decline" });
+        console.log("Outbound campaign: No incoming calls allowed.");
+        return;
+      }
     }
 
     console.log(
@@ -1783,6 +1830,17 @@ useEffect(() => {
             : Array.from(callNumber).fill("X", 1, -1).join("")
           : callNumber;
     dispatch(setCallerNumber(CallerNumber));
+    // Trigger LimeChat API on incoming call only if is_limechat toggle is ON
+    if (callNumber && callNumber !== "Unknown" && checkLimechatEnabled()) {
+      const callIdentifier = callerId || callNumber;
+      if (lastHandledIncomingCallRef.current !== callIdentifier) {
+        lastHandledIncomingCallRef.current = callIdentifier;
+        isIncomingTabOpenedRef.current = false;
+        triggerLimechatInboundCallAction(callNumber, (opened) => {
+          if (opened) isIncomingTabOpenedRef.current = true;
+        });
+      }
+    }
     // const autoAnswerValue = autoAnswerRef.current;
     const autoAnswerValue =Cookies.get("autoAnswer") ?? autoAnswerRef.current ?? "1";
 
@@ -1790,8 +1848,9 @@ useEffect(() => {
     console.log(autoAnswer, "auto answer value in invite");
     console.log(Cookies.get("isReceivedDirect"), "auto isReceivedDirect value in invite");
 
-    if (Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") {
+    if ((Cookies.get("isReceivedDirect") === "0" && autoAnswerValue === "0") || ctcAutoAnswer) {
       console.log("isReceivedDirect");
+      console.log(ctcAutoAnswer, "ctcAutoAnswer forcing receiveCall");
       console.log("---------TEST------------lead_uuid", lead_uuid);
       if (Cookies.get("isCallResume") === "0" && auto) {
         console.log("in hangup ------------------>");
@@ -2458,9 +2517,13 @@ useEffect(() => {
 
       switch (functionName) {
         case "callTermination":
-          if (isBarge) {
+          // Click-to-call (extension/trunk) never needs after-call-work either - same
+          // exemption as barge/whisper/monitor above.
+          const isCtcTermination = Cookies.get("isCtcCall") === "true";
+          if (isBarge || isCtcTermination) {
             dispatch(setIsCallHangUp(false));
-            console.log("iscall callTermination is barge call, set setIsCallHangUp = FALSE");
+            console.log("iscall callTermination is barge/ctc call, set setIsCallHangUp = FALSE");
+            Cookies.remove("isCtcCall");
             Cookies.set(
               "statuscardToKeypadSider",
               JSON.stringify(dataForLocalStorageSc),
@@ -2584,6 +2647,19 @@ useEffect(() => {
             ];
             extraHeader = { ...extraHeader, extraHeaders: newheader };
             console.log(extraHeader, "newheader");
+          }
+          // Multi Caller IDs for Manual Calls : caller id selected by agent on dial pad
+          const manualCallerId = Cookies.get("manual_caller_id");
+          if (!user?.isPbx && manualCallerId) {
+            extraHeader = {
+              ...extraHeader,
+              // From user must stay agent extension: FS resolves tenant/user from it
+              // (manual calls are ACL-authed, no digest challenge). Lua applies this caller id.
+              extraHeaders: [
+                ...(extraHeader?.extraHeaders || []),
+                `X-manual_caller_id: ${manualCallerId}`,
+              ],
+            };
           }
           if (!user?.isPbx && leaduuid) {
             onGetLeadInfo(leaduuid);
@@ -3076,8 +3152,13 @@ useEffect(() => {
     }
   };
 
-  // RECEIVE CALL
   const receiveCall = () => {
+    // If LimeChat is enabled and browser popup blocker prevented window.open during onInvite, open it now on Answer user click
+    if (checkLimechatEnabled() && !isIncomingTabOpenedRef.current) {
+      if (openLimechatOutboundTab()) {
+        isIncomingTabOpenedRef.current = true;
+      }
+    }
     //callerTune.pause(); //	Caller tune pause
     if (Cookies.get("isReceivedDirect") === "0") {
       // callerBeepPlay.play(); //	Caller tune play
@@ -5296,6 +5377,8 @@ useEffect(() => {
 
   // HANGUP CALL
   const hangupCall = (callHangUpType?: string) => {
+    lastHandledIncomingCallRef.current = null;
+    isIncomingTabOpenedRef.current = false;
     //alert(callHangUpType);
     setAddNoteSeconds(seconds);
     setAddNoteMinutes(minutes);
@@ -6059,9 +6142,11 @@ useEffect(() => {
     <>
       <div
         className={`fixed 
-        top-0 left-0 right-0 z-50 px-4 overflow-x-hidden overflow-y-auto h-full bg-heading bg-opacity-30 ${!showModal && "hidden"
+        top-0 left-0 right-0 z-50 px-4 overflow-x-hidden overflow-y-auto h-full ${isPinned ? "pointer-events-none" : "bg-heading bg-opacity-30"} ${!showModal && "hidden"
           }`}
         onClick={() => {
+          // Pinned phone is not closed on outside click
+          if (isPinned) return;
           onCancleClick();
           dispatch(onShowCallModal("false"));
           if (callScreen === "INCOMING") {
@@ -6096,6 +6181,7 @@ useEffect(() => {
             bg-white
             rounded-[20px] 
             drop-shadow-lg
+            pointer-events-auto
           "
             onClick={(e: any) => e.stopPropagation()}
           >
@@ -6119,6 +6205,19 @@ useEffect(() => {
                           ? "Call Failed"
                           : "No Live Call"}
                 </span>
+                {onTogglePin && (
+                  <button
+                    type="button"
+                    title={isPinned ? "Unpin Phone" : "Pin Phone"}
+                    className="ml-auto text-white hover:opacity-80"
+                    onClick={(e: any) => {
+                      e.stopPropagation();
+                      onTogglePin();
+                    }}
+                  >
+                    {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+                  </button>
+                )}
               </div>
 
 

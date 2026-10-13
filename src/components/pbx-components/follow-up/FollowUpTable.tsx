@@ -36,7 +36,8 @@ import FollowUpRescheduledInformation from "./FollowUpRescheduledInformation";
 // THIRD-PARTY IMPORT
 import { format } from "date-fns";
 import { useDebouncedCallback } from "use-debounce";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // ASSETS
 const editIcon = "/assets/icons/edit.svg";

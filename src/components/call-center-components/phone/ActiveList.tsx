@@ -34,7 +34,8 @@ import {
 } from "@/redux/slice/commonSlice";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { NoRecordFound } from "@/components/ui-components";
 import {
   getCallQueueList,

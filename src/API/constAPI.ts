@@ -98,6 +98,7 @@ export const UPDATE_LIVE_AGENT_ENTRY =
   "/agent-call-center/update-entry-live-report";
 export const DELETE_LIVE_AGENT_ENTRY = "/agent-call-center/live-report";
 export const CALL_QUEUE_LIST = "/agent-call-center/call-queue/list";
+export const MANUAL_CALLER_IDS = "/agent-call-center/manual-caller-ids";
 export const UPDATE_LEAD_STATUS = "/agent-call-center/update-lead-status-sent";
 export const UPDATE_DIAL_LEVEL = "/agent-call-center/update-dial-level";
 export const INBOUND_CALL_QUEUE = "/inbound-campaign/call-queue";

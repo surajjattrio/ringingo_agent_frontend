@@ -12,7 +12,8 @@ import { Button } from "@/components/forms";
 import { useAuth } from "@/contexts/hooks/useAuth";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // TYPES
 interface CallFailedPageProps {

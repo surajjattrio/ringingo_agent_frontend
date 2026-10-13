@@ -4,6 +4,7 @@ import {
   AGENT_CAMPAIGN,
   AGENT_STATUS,
   CALL_QUEUE_LIST,
+  MANUAL_CALLER_IDS,
   CAMPAIGN_LIST,
   CAMPAIGN_WEBFORMS,
   BLENDED_CAMPAIGN_WEBFORMS,
@@ -104,4 +105,9 @@ export const blendedcampaignWebFormGet = (params: any) => {
 export const inboundcampaignWebFormGet = (params: any) => {
   return apiInstance.get(
     INBOUND_CAMPAIGN_WEBFORMS + `/${params.feature}/${params.campaign_uuid}`);
+};
+
+// Caller ids (DID number with name) agent can select for manual call in campaign
+export const manualCallerIdsGet = (campaign_uuid: string) => {
+  return apiInstance.get(MANUAL_CALLER_IDS + `/${campaign_uuid}`);
 };

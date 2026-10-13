@@ -58,7 +58,8 @@ import {
 import { getMessageFromNumber } from "@/components/helperFunctions";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Disclosure, Transition } from "@headlessui/react";
@@ -229,6 +230,7 @@ const FinishLead = (props: FinishLeadProps) => {
     code: "",
     lead_uuid: addLeadNoteId,
     comment: "",
+    knowledge_base: "",
   };
 
   const validationSchema = Yup.object<any>({
@@ -456,9 +458,11 @@ const FinishLead = (props: FinishLeadProps) => {
         }
         let res: any;
         let response: any;
-        if (values.comment !== "") {
+        //if (values.comment !== "") {
+        if (values.comment !== "" || values.knowledge_base !== "") {
           let data = {
             comment: values.comment,
+            knowledge_base: values.knowledge_base || "",
             lead_uuid: currentIds.addLeadNoteId || "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
             cdrs_uuid: currentIds.addNoteId || currentIds.cookieCallId || "",
@@ -489,7 +493,8 @@ const FinishLead = (props: FinishLeadProps) => {
           }
         }
         if (
-          values.comment !== ""
+          //values.comment !== ""
+          values.comment !== "" || values.knowledge_base !== ""
             ? res &&
             res.statusCode === 201 &&
             response &&
@@ -534,6 +539,7 @@ const FinishLead = (props: FinishLeadProps) => {
             campaign_uuid: selectedCampaign,
             pause: agentStatus === "pause" ? "true" : "false",
             custom_callid: currentIds.customCallId || "",
+            knowledge_base: values.knowledge_base || "",
           };
           if (campaignType === "outbound" || campaignType === "blended") {
             payload["campaign_flag"] = campaignType;
@@ -543,9 +549,11 @@ const FinishLead = (props: FinishLeadProps) => {
           // response = {statusCode:200};
           response = await dispatch(leadHangup(payload)).unwrap();
         }
-        if (values.comment !== "") {
+        //if (values.comment !== "") {
+         if (values.comment !== "" || values.knowledge_base !== "") {
           let data = {
             comment: values.comment,
+            knowledge_base: values.knowledge_base || "",
             lead_uuid: currentIds.addLeadNoteId || "",
             // cdrs_uuid: addNoteId ? addNoteId : "",
             cdrs_uuid: currentIds.addNoteId || currentIds.cookieCallId || "",
@@ -553,20 +561,21 @@ const FinishLead = (props: FinishLeadProps) => {
           };
           res = await dispatch(createNewNote(data)).unwrap();
         }
+         const hasNoteOrKb = values.comment !== "" || values.knowledge_base !== "";
         if (
-          !!currentIds.addLeadNoteId && values.comment !== ""
+          !!currentIds.addLeadNoteId && && hasNoteOrKb
             ? res &&
             res.statusCode === 201 &&
             response &&
             response.statusCode === 200
-            : !!!currentIds.addLeadNoteId && values.comment !== ""
+            : !!!currentIds.addLeadNoteId && hasNoteOrKb
               ? res && res.statusCode === 201
               : !!currentIds.addLeadNoteId &&
-                values.comment === "" &&
+                hasNoteOrKb  &&
                 response &&
                 response.statusCode === 200
                 ? true
-                : !!!currentIds.addLeadNoteId && values.comment === ""
+                : !!!currentIds.addLeadNoteId && hasNoteOrKb
         ) {
           // Success(!!addLeadNoteId ? response?.data : res.data);
           dispatch(onSetDialType("manualDial"));
@@ -820,6 +829,22 @@ const FinishLead = (props: FinishLeadProps) => {
                 </div>
               </div>
             ) : null}
+            {(
+              user?.agent_detail?.agent_permission?.[0]?.knowledge_base === "0") && (
+              <div className="py-2">
+                <Textarea
+                  className="!px-2"
+                  label="Knowledge Base Link"
+                  name="knowledge_base"
+                  placeholder="Enter Knowledge Base Link..."
+                  value={values.knowledge_base}
+                  onChange={handleChange}
+                  touched={touched}
+                  errors={errors}
+                  onBlur={handleBlur}
+                />
+              </div>
+            )}  
             <div className="py-2">
               <Textarea
                 className="!px-2"

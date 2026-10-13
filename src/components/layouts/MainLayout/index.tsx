@@ -39,7 +39,8 @@ import { useAuth } from "@/contexts/hooks/useAuth";
 const WSS_URL = process.env.WSS_URL;
 const baseUrl = process.env.BASE_URL;
 
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { getTenantPersonalization } from "@/redux/slice/tenantSlice";
 import { ConfirmationModal } from "@/components/modals";
 import { io } from "socket.io-client";
@@ -52,6 +53,8 @@ import OmniChannelServiceStandalone from "@/components/popups/OmniChannelService
 import { getSocket } from "@/config/socket";
   import { startKeepAliveMic, stopKeepAliveMic } from "@/utils/micKeepAlive";
 import { Phone } from "lucide-react";
+
+const WEBPHONE_PIN_KEY = "webphone_pinned";
 
 
 
@@ -68,7 +71,34 @@ const FaviconIcon = process.env.COLLAPSED_LOGO;
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const isdrawerOpen = useDrawerOpen();
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModal, setShowModalState] = useState<boolean>(false);
+  // Pinned webphone stays open (also after page refresh) until agent unpins it
+  const [isPhonePinned, setIsPhonePinned] = useState<boolean>(false);
+  const isPhonePinnedRef = useRef<boolean>(false);
+  const setShowModal = (value: boolean) => {
+    setShowModalState(isPhonePinnedRef.current ? true : value);
+  };
+  const onTogglePhonePin = () => {
+    const pinned = !isPhonePinnedRef.current;
+    isPhonePinnedRef.current = pinned;
+    setIsPhonePinned(pinned);
+    try {
+      if (pinned) localStorage.setItem(WEBPHONE_PIN_KEY, "1");
+      else localStorage.removeItem(WEBPHONE_PIN_KEY);
+    } catch (e) { }
+    if (pinned) setShowModalState(true);
+  };
+  useEffect(() => {
+    let pinned = false;
+    try {
+      pinned = localStorage.getItem(WEBPHONE_PIN_KEY) === "1";
+    } catch (e) { }
+    if (pinned) {
+      isPhonePinnedRef.current = true;
+      setIsPhonePinned(true);
+      setShowModalState(true);
+    }
+  }, []);
   const dispatch = useAppDispatch();
   const reduxDispatch = useAppDispatch();
   const selectedCampaign = useSelectedCampaign();
@@ -660,6 +690,8 @@ useEffect(() => {
         <CallingModal
           showModal={showModal}
           setShowModal={setShowModal}
+          isPinned={isPhonePinned}
+          onTogglePin={onTogglePhonePin}
           onCancleClick={() => {
             setShowModal(false);
           }}

@@ -67,9 +67,17 @@ const LogoSection = () => {
           }
         >
           {isdrawerOpen ? (
-            <Icon className="w-[140px] h-12" name="MenuLogoExpandedImage" />
+            // <Icon className="w-[140px] h-12" name="MenuLogoExpandedImage" />
+            <Icon
+              name="NewLogo"
+              height={40}
+              width={180}
+              alt="Logo"
+            />
+            
           ) : (
-            <Icon className="w-8 h-8" name="MenuLogoCollapsedImage" />
+            <Icon className="w-8 h-8" name="CollapsedNewLogo"  height={20}
+              width={40} />
           )}
         </div>
         <div

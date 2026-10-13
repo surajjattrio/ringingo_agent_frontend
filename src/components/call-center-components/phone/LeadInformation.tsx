@@ -36,11 +36,31 @@ import { getBotLeadInfo } from "@/redux/services/xenyAiService";
 import getDomain from "@/utils/GetDoamin";
 import { Danger } from "@/redux/services/toasterService";
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { Pencil } from "lucide-react";
 
 // ASSETS
 const editIcon = "/assets/icons/edit.svg";
+const HIDDEN_LEAD_KEYS = new Set([
+    "_id",
+    "id",
+    "__v",
+    // "custom_fields",
+    "tenant_uuid",
+    // "user_uuid",
+    "lead_group_uuid",
+    // "created_flag",
+    // "lead_status",
+    "campaign_uuid",
+    "created_flag",
+    "role",
+    "tenant",
+    "retries_count",
+    // "lead_management_uuid",
+    "createdat",
+    "updatedat",
+]);
 
 // TYPES
 interface LeadInformationProps {
@@ -49,7 +69,8 @@ interface LeadInformationProps {
 
 /* ============================== LEAD INFORMATION BOX ============================== */
 
-const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
+const LeadInformation = (props: LeadInformationProps) => {
+  const { setIsHangUp } = props;
   const dispatch = useAppDispatch();
 
   // Redux states
@@ -66,6 +87,10 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
   const isActiveChat = useIsActiveChat();
   const leadInfo = useLeadInfo();
   const { user } = useAuth();
+  const leadEditVal =
+    user?.permission?.is_lead_edit ??
+    (user as any)?.agent_detail?.agent_permission?.[0]?.is_lead_edit;
+  const hasLeadEditPermission = leadEditVal === "0" || leadEditVal === undefined;
   const hasBotLeadInfoPermission =
     user?.permission?.bot_lead_info === "0" ||
     (user as any)?.agent_detail?.agent_permission?.[0]?.bot_lead_info === "0";
@@ -191,7 +216,13 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
           {showLeadInformation() && (
             <div
               className="relative h-[14px] w-[14px] 3xl:w-[16px] 3xl:h-[16px] cursor-pointer mr-2"
-              onClick={() => setEditLead(true)}
+              onClick={() => {
+                if (!hasLeadEditPermission) {
+                  Danger("u doesnt have access to edit the info");
+                  return;
+                }
+                setEditLead(true);
+              }}
             >
               <Legacy src={editIcon} alt="edit" layout="fill" />
             </div>
@@ -251,12 +282,8 @@ const LeadInformation = ({ setIsHangUp }: LeadInformationProps) => {
                       value !== "" &&
                       value !== null &&
                       value !== undefined &&
-                      key !== "_id" &&
-                      key !== "id" &&
-                      key !== "__v" &&
-                      key !== "custom_fields" &&
-                      key !== "tenant_uuid" &&
-                      key !== "user_uuid"
+                      typeof value !== "object" &&
+                      !HIDDEN_LEAD_KEYS.has(key.toLowerCase())
                     )
                     .map(([key, value], idx) => {
                       const label = key

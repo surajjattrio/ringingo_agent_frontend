@@ -15,7 +15,8 @@ import { clearSettingSlice } from "@/redux/slice/settingSlice";
 import { clearRealtimeReport } from "@/redux/slice/callCenter/realtimeReportSlice";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { clearChatSlice } from "@/redux/slice/chatSlice";
 import { isValid } from "date-fns";
 

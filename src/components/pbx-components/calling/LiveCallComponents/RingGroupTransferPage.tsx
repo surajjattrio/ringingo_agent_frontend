@@ -6,7 +6,8 @@ import { useRingGroupList } from "@/redux/slice/callSlice";
 import { Button, Select, Switch } from "@/components/forms";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // ASSETS
 const call = "/assets/icons/white/call_white.svg";

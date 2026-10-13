@@ -14,3 +14,4 @@ coverage
 package-lock.json
 yarn.lock
 .agents
+ringingo_agent_api_documentation.md

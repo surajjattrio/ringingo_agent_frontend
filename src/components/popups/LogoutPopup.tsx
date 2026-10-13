@@ -16,7 +16,8 @@ import { Registerer, RegistererState, UserAgent } from "sip.js";
 //import { WSS_URL } from "@/API/baseURL";
 const WSS_URL = process.env.WSS_URL;
 
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { userAgentUnRegistration } from "../pbx-components/calling/CallingModal";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
 import { updateLiveAgentEntry } from "@/redux/slice/campaignSlice";

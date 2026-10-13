@@ -30,7 +30,8 @@ import { useAuth } from "@/contexts/hooks/useAuth";
 // import LeadNote from "./LeadNote";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { useDebouncedCallback } from "use-debounce";
 
 // ASSETS

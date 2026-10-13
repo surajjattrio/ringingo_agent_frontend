@@ -19,7 +19,8 @@ const icons = {
 
   ImageIcon : "/assets/images/photo.svg",
   FollowUpImage : "/assets/images/FeaturedIcon.svg",
-  
+  NewLogo:"/assets/images/ringingo-new-logo.png",
+  CollapsedNewLogo:"/assets/images/Ringingo-Logo-new.png",
   // Login Logo
   LoginLogo:"/assets/images/LoginLogo1.svg",
 
@@ -87,6 +88,7 @@ const Photo = (
                     width={width || 10}
                     height={height || 10}
                     onClick={onClick}
+                    unoptimized
                 />
             ) : (
                 <div

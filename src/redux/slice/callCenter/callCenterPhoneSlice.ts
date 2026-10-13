@@ -20,7 +20,8 @@ import {
   getCallwaitingCount,
   getParentDisposition,
 } from "@/redux/services/callCenter/callCenterPhoneService";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { singleLeadGet } from "@/redux/services/leadListService";
 import { getSingleLeadInfo } from "@/redux/slice/leadListSlice";
 

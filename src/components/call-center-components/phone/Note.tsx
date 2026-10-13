@@ -16,7 +16,8 @@ import { Button } from "../../forms";
 import { Chip, Loader, NoRecordFound } from "../../ui-components";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // ASSETS
 const doc = "/assets/icons/document-text.svg";

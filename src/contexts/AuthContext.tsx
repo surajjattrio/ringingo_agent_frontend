@@ -39,7 +39,8 @@ import { RemoveCookiesData, clearAllData } from "@/components/helperFunctions";
 
 const baseUrl = `${process.env.BASE_URL}`;
 
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import axios from "axios";
 // import { io } from "socket.io-client";
 
@@ -72,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const currentStatus = useAppSelector(selectStatus);
   const callScreen = useAppSelector(selectCallScreen);
   const isShowCallDuration = useAppSelector(selectIsShowCallDuration);
+  //const isKnowledgeBase = permission?.knowledge_base === "0";
   const isCallHangUp = useAppSelector(selectIsCallHangUp);
   const prepareData = (isPbx: boolean, permission: any) => {
     const sideBarData = isPbx ? PbxMenuList : CallCenterMenuList;
@@ -171,6 +173,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const settings = permission?.settings === "1";
         const isNumberMasking = permission?.number_masking === "0";
         const isCallQueueSelection = permission?.callqueue_selection === "0";
+        const isKnowledgeBase = permission?.knowledge_base === "0";
         const isMessaging=permission?.whatsapp==="1"|| permission?.instagram==="1"|| permission?.facebook==="1"
         console.log(isMessaging,'isMessaging',isRecording,'isRecording');
         
@@ -184,6 +187,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           settings,
           isMessaging,
           isCallQueueSelection,
+          isKnowledgeBase,
           urls: prepareData(isPbx, permission),
         };
         data.isPbx = false;

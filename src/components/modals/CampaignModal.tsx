@@ -21,7 +21,8 @@ import { Chip, Loader } from "../ui-components";
 import InlineSwitch from "../forms/InlineSwitch";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { useAuth } from "@/contexts/hooks/useAuth";
 import { clearLeadDetails } from "@/redux/slice/callCenter/callCenterPhoneSlice";
 import { userAgentUnRegistration } from "../pbx-components/calling/CallingModal";

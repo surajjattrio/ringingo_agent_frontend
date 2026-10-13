@@ -3,7 +3,8 @@ import Legacy from "next/legacy/image";
 // PROJECT IMPORTS
 import { useAuth } from "@/contexts/hooks/useAuth";
 import { CheckBox } from "@/components/forms";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/redux/hooks";
 import Icon, { IconKey } from "../../../ui-components/Icon";

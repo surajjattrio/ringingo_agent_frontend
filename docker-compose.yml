@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  ringingo-agent-fs:
+    container_name: ringingo-agent-fs
+    build: .
+
+    restart: always
+
+    network_mode: host
+
+    env_file:
+      - .env
+
+    volumes:
+      - /opt/caching:/opt/caching
+      - /usr/local/freeswitch:/usr/local/freeswitch

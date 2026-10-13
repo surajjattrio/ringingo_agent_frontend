@@ -26,7 +26,8 @@ import {
 } from "@/redux/slice/commonSlice";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // ASSETS
 const call_end = "/assets/icons/white/call_end.svg";

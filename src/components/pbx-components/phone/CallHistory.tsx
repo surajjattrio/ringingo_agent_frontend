@@ -23,7 +23,8 @@ import { Danger, Success } from "@/redux/services/toasterService";
 
 // THIRD-PARTY IMPORT
 import { format } from "date-fns";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import Icon from "@/components/ui-components/Icon";
 
 // ASSETS

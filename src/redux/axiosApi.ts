@@ -7,7 +7,8 @@ import { Danger } from "./services/toasterService";
 import { RemoveCookiesData } from "@/components/helperFunctions";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 export const apiInstance = axios.create({
   baseURL: process.env.BASE_URL

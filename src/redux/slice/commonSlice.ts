@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // PROJECT IMPORTS
 import { useAppSelector } from "../hooks";

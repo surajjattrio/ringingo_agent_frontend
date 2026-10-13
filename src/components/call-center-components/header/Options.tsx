@@ -39,7 +39,8 @@ import { userAgentUnRegistration } from "@/components/pbx-components/calling/Cal
 
 // THIRD-PARTY IMPORT
 import { StylesConfig } from "react-select";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // CUSTOM STYLE
 const customStyles: StylesConfig<any> = {

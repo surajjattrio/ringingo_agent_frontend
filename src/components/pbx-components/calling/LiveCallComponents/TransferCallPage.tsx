@@ -1,4 +1,5 @@
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import Legacy from "next/legacy/image";
 import { useState } from "react";
 

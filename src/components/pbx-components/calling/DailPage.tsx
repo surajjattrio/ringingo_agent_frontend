@@ -5,12 +5,14 @@ import {
   onShowCallModal,
   useCampaignMode,
   useCampaignType,
+  useSelectedCampaign,
 } from "@/redux/slice/commonSlice";
 import Cookies from "js-cookie";
 import { useAppDispatch } from "@/redux/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { checkDispostionCause } from "@/redux/slice/callSlice";
 import DispostionCallModal from "./DispostionCallModal";
+import { manualCallerIdsGet } from "@/redux/services/campaignService";
 
 // ASSETS
 const callIcon = "/assets/icons/white/call_white.svg";
@@ -31,6 +33,7 @@ const DailPage = (props: DailPageProps) => {
   const { user } = useAuth();
   const campaignMode = useCampaignMode();
   const campaignType = useCampaignType();
+  const selectedCampaign = useSelectedCampaign();
 
   const dispatch = useAppDispatch();
   // const [dispoFlag, setDispoFlag] = useState(0);
@@ -44,6 +47,45 @@ const DailPage = (props: DailPageProps) => {
   };
 
   const [isCalling, setIsCalling] = useState(false);
+
+  // Multi Caller IDs for Manual Calls
+  const [callerIds, setCallerIds] = useState<{ number: string; name: string }[]>([]);
+  const [manualCallerId, setManualCallerId] = useState<string>(
+    Cookies.get("manual_caller_id") || ""
+  );
+
+  useEffect(() => {
+    if (user?.isPbx || !selectedCampaign) {
+      setCallerIds([]);
+      onSelectCallerId("");
+      return;
+    }
+    const onGetCallerIds = async () => {
+      try {
+        const res: any = await manualCallerIdsGet(selectedCampaign);
+        const list = res?.statusCode === 200 ? res?.data?.caller_ids || [] : [];
+        setCallerIds(list);
+        // Keep previous selection if allowed in current campaign, else select first caller id
+        const current = Cookies.get("manual_caller_id") || "";
+        if (!list.some((val: any) => val?.number === current)) {
+          onSelectCallerId(list[0]?.number || "");
+        }
+      } catch (error: any) {
+        setCallerIds([]);
+        onSelectCallerId("");
+        console.log("manual caller ids err -->", error?.message);
+      }
+    };
+    onGetCallerIds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCampaign, user?.isPbx]);
+
+  // Selected caller id is read in CallingModal while sending manual call INVITE
+  const onSelectCallerId = (value: string) => {
+    setManualCallerId(value);
+    if (value) Cookies.set("manual_caller_id", value);
+    else Cookies.remove("manual_caller_id");
+  };
 
   const checkDispostionCauses = async () => {
     if (isCalling) return;  // Prevent double click
@@ -112,6 +154,23 @@ const DailPage = (props: DailPageProps) => {
         {/* <Legacy src={closeIcon} alt="close" height={24} width={24} /> */}
         {/* </button> */}
         {/* </div> */}
+
+        {/* Caller ID selection for manual call */}
+        {callerIds.length > 0 && (
+          <div className="mb-3 flex justify-center">
+            <select
+              className="w-[85%] bg-white border border-gray-300 rounded-md px-2 py-1 text-[13px] outline-none"
+              value={manualCallerId}
+              onChange={(e) => onSelectCallerId(e.target.value)}
+            >
+              {callerIds.map((val) => (
+                <option key={val.number} value={val.number}>
+                  {val.name ? `${val.name} (${val.number})` : val.number}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Input Field with Erase Button */}
         <div className="relative mb-3">

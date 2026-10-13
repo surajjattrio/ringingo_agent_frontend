@@ -24,7 +24,8 @@ import getDomain from "@/utils/GetDoamin";
 import { Registerer, RegistererState, UserAgent } from "sip.js";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 // import io from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 const logo: any = process.env.EXPANDED_LOGO;
@@ -504,7 +505,7 @@ const LoginForm = () => {
           {/* Logo */}
           < div className=" flex justify-center mb-1" >
             <Icon
-              name="MenuLogoExpandedImage"
+              name="NewLogo"
               height={40}
               width={180}
               alt="Logo"

@@ -43,7 +43,8 @@ import { LogoutPopup } from "@/components/popups";
 import { useAuth } from "@/contexts/hooks/useAuth";
 import { userAgentUnRegistration } from "@/components/pbx-components/calling/CallingModal";
 import { CampaignModal } from "@/components/modals";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { setLoginAgentCampaign } from "@/utils/Storage";
 import Options from "@/components/call-center-components/header/Options";
 import { getAllLeadList } from "@/redux/slice/leadListSlice";
@@ -166,6 +167,17 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
   );
   const [isLogoutLoading, setIsLogoutLoading] = useState<boolean>(false);
   const [wrapUpTime, setWrapUpTime] = useState<string>("");
+ 
+  const isWrapUpUrgent = React.useMemo(() => {
+    if (!wrapUpTime) return false;
+    const parts = wrapUpTime.split(":");
+    if (parts.length === 2) {
+      const minutes = parseInt(parts[0], 10) || 0;
+      const seconds = parseInt(parts[1], 10) || 0;
+      return minutes === 0 && seconds <= 10;
+    }
+    return false;
+  }, [wrapUpTime]);
 
   // GET CAMPAIGN OPTIONS
   const onGetCampaign = async () => {
@@ -711,6 +723,7 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
     dispatch(onSetCampaignType(e?.campaign));
     Cookies.set("campaignType", e?.campaign);
     Cookies.set("isRecording", e?.recording);
+    Cookies.set("is_limechat", e?.is_limechat ?? "1");
 
     if (e?.campaign === "outbound" || e?.campaign === "blended") {
       Cookies.set("lead_information", "0");
@@ -781,9 +794,34 @@ const Header = ({ breakValue, onBreakSelection }: HeaderProps) => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            {wrapUpTime && (
-              <div className="font-medium text-sm text-[#6B7280]">
-                {wrapUpTime}
+           {wrapUpTime && (
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-md transition-all duration-300 ${
+                  isWrapUpUrgent
+                    ? "bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-red-500/40 ring-2 ring-red-400 animate-pulse"
+                    : "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-500/30"
+                }`}
+                title={`Wrap-Up Time Remaining: ${wrapUpTime}`}
+              >
+
+                {/* Clock Icon */}
+                <svg
+                  className={`w-3.5 h-3.5 ${isWrapUpUrgent ? "animate-bounce" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 3" />
+                </svg>
+
+                {/* <span className="text-[11px] font-bold uppercase tracking-wider">
+                  Wrap-Up:
+                </span> */}
+                <span className="font-mono text-sm font-black tracking-wider drop-shadow-sm">
+                  {wrapUpTime}
+                </span>
               </div>
             )}
             <WebRtcStatus />

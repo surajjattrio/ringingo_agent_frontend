@@ -12,10 +12,11 @@ import {
     useAddLeadNoteId,
     useAddNoteId,
 } from "@/redux/slice/commonSlice";
-import { Button, Textarea } from "@/components/forms";
-
+import { Button, Input, Textarea } from "@/components/forms";
+import { useAuth } from "@/contexts/hooks/useAuth";
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 
 // TYPES
 interface AddNotePageProps {
@@ -56,9 +57,10 @@ const AddNotePage = (props: AddNotePageProps) => {
     const dispatch = useAppDispatch();
     const addNoteId = useAddNoteId();
     const addLeadNoteId = useAddLeadNoteId();
+    const [knowledgeBase, setKnowledgeBase] = useState<string>("");
     const [comment, setComment] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
+    const { user } = useAuth();
     // ON SUBMIT NOTE
     const onSubmit = async () => {
         setIsLoading(true);
@@ -70,6 +72,7 @@ const AddNotePage = (props: AddNotePageProps) => {
             }
             const payloaad = {
                 comment: comment,
+                knowledge_base: knowledgeBase,
                 lead_uuid: addLeadNoteId ? addLeadNoteId : "",
                 cdrs_uuid: addNoteId ? addNoteId : "",
             };
@@ -150,6 +153,19 @@ const AddNotePage = (props: AddNotePageProps) => {
                             )}
                         </div>
                     </div>
+                     {(user?.permission?.knowledge_base === "0" ||
+                            (user as any)?.agent_detail?.agent_permission?.[0]?.knowledge_base === "0") && (
+                            <div className="pb-2">
+                                <Input
+                                    className="!px-2"
+                                    label="Knowledge Base Link"
+                                    name="knowledgeBase"
+                                    placeholder="Enter Knowledge Base Link..."
+                                    value={knowledgeBase}
+                                    onChange={(e: any) => setKnowledgeBase(e.target.value)}
+                                />
+                            </div>
+                        )}
                     <div className="pt-2">
                         <div>
                             <Textarea

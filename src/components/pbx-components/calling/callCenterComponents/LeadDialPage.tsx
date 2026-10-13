@@ -26,7 +26,8 @@ import {
 // import { agentEntryAdd } from "@/redux/slice/authSlice";
 
 // THIRD-PARTY IMPORT
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
+import Cookies from "@/lib/cookies";
 import { userAgentUnRegistration } from "../CallingModal";
 import { agentEntryAdd } from "@/redux/slice/authSlice";
 import { getSocket } from "@/config/socket";
